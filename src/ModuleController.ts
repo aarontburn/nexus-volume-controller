@@ -2,19 +2,22 @@ import { BrowserWindow } from "electron";
 import { Dimension } from "./objects/Dimension";
 import * as path from "path";
 import { Module } from "./module_builder/Module";
-import { SettingsModule } from "./built_ins/modules/settings_module/SettingsModule";
-import { HomeModule } from "./built_ins/modules/home_module/HomeModule";
+import { SettingsModule } from "./built_ins/settings_module/SettingsModule";
+import { HomeModule } from "./built_ins/home_module/HomeModule";
 import { IPCHandler } from "./IPCHandler";
 import { IPCCallback, IPCSource } from "./module_builder/IPCObjects";
 import { StorageHandler } from "./StorageHandler";
 import { ModuleSettings } from "./module_builder/ModuleSettings";
-import { Setting } from "./module_builder/settings/Setting";
-import { SampleModule } from "./sample_module/{MODULE_NAME}Module";
+import { Setting } from "./module_builder/Setting";
+import { VolumeControllerModule } from "./volume_controller/VolumeControllerModule";
+
+
 
 const WINDOW_DIMENSION: Dimension = new Dimension(1920, 1080);
 const ipcCallback: IPCCallback = {
     notifyRenderer: IPCHandler.fireEventToRenderer.bind(IPCHandler)
 }
+
 
 export class ModuleController implements IPCSource {
 
@@ -130,7 +133,7 @@ export class ModuleController implements IPCSource {
 
         this.addModule(new HomeModule(ipcCallback));
         this.addModule(this.settingsModule);
-        this.addModule(new SampleModule(ipcCallback));
+        this.addModule(new VolumeControllerModule(ipcCallback));
 
     }
     private addModule(module: Module): void {

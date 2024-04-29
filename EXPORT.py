@@ -12,7 +12,7 @@ import time
 # 
 # Step 1: Change this to the name of folder containing your module
 # 
-MODULE_NAME = 'sample_module' # Change this to the name of folder containing your module
+MODULE_NAME = 'volume_controller' # Change this to the name of folder containing your module
 # 
 # Step 2: Copy the resulting folder in ./output/ folder to the {HOME}/.modules/external_modules 
 # 

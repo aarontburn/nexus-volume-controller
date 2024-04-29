@@ -1,7 +1,7 @@
 import { Module } from "./module_builder/Module";
 import fs from "fs";
 import { app } from 'electron';
-import { Setting } from "./module_builder/settings/Setting";
+import { Setting } from "./module_builder/Setting";
 import path from "path"
 
 export class StorageHandler {
