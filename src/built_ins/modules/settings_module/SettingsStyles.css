@@ -1,0 +1,101 @@
+.splitter {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+}
+
+#separator {
+    cursor: col-resize;
+    background-color: var(--accent-color);
+    width: 10px;
+    height: 100%;
+    min-width: 10px;
+
+    /* Prevent the browser's built-in drag from interfering */
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#left {
+    width: 30vw;
+    height: 100%;
+    min-width: 200px;
+    text-align: center;
+    overflow-y: auto;
+}
+
+#left p {
+    font-size: 28px;
+    cursor: default;
+    margin: 0px;
+    padding: 10px;
+    user-select: none;
+}
+
+#right {
+    width: 70vw;
+    height: 100%;
+    min-width: 10px;
+    overflow-y: auto;
+}
+
+.setting {
+    padding-left: 15px;
+    padding-top: 25px;
+
+    display: flex;
+    align-items: center;
+}
+
+.spacer {
+    padding-right: 24px;
+    display: inline-block;
+
+}
+
+.setting input {
+    border-style: solid;
+    border-color: var(--off-white);
+    border-width: thin;
+    border-radius: 5px;
+
+    background-color: var(--default-background-color);
+
+    font-size: 26px;
+    color: var(--off-white);
+    height: 45px;
+}
+
+input:focus {
+    outline: transparent;
+    border: 1px solid var(--accent-color);
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.setting h1 {
+    margin: -5px 0px;
+    padding: 0;
+    font-size: 26px;
+    font-weight: normal;
+}
+
+.setting p {
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+
+}
+
+.left-component {
+    width: 115px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
