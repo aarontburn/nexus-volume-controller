@@ -8,15 +8,13 @@ import time
 # Author: aarontburn
 # Module Exporter
 
-# Usage Information:
-# 
-# Step 1: Change this to the name of folder containing your module
-# 
+"""
+Usage Information:
+Change this to the name of folder containing your module
+"""
 MODULE_NAME = 'volume_controller' # Change this to the name of folder containing your module
-# 
-# Step 2: Copy the resulting folder in ./output/ folder to the {HOME}/.modules/external_modules 
-# 
-# 
+
+
 
 
 PWD = str(pathlib.Path(__file__).parent.resolve())

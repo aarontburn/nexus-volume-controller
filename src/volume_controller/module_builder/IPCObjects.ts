@@ -1,5 +1,5 @@
 export interface IPCSource {
-    getIpcSource(): string;
+    getIPCSource(): string;
 }
 
 export interface IPCCallback {

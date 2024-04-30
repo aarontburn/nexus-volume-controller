@@ -32,7 +32,7 @@ export class ModuleController implements IPCSource {
         this.ipc = ipcHandler;
     }
 
-    getIpcSource(): string {
+    public getIPCSource(): string {
         return "main";
     }
 
@@ -93,8 +93,8 @@ export class ModuleController implements IPCSource {
         });
 
         this.activeModules.forEach((module: Process) => {
-            console.log("Registering " + module.getIpcSource() + "-process");
-            this.ipc.on(module.getIpcSource() + "-process", (_, eventType: string, data: any[]) => {
+            console.log("Registering " + module.getIPCSource() + "-process");
+            this.ipc.on(module.getIPCSource() + "-process", (_, eventType: string, data: any[]) => {
                 this.modulesByName.get(module.getModuleName()).receiveIPCEvent(eventType, data);
             })
         });
