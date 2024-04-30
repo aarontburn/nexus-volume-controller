@@ -17,6 +17,7 @@ export class VolumeControllerProcess extends Process {
 
     private static VOLUME_REFRESH_MS = 500;
 
+	private refreshTimeout: NodeJS.Timeout;
 
     public constructor(ipcCallback: IPCCallback) {
         super(VolumeControllerProcess.MODULE_NAME, VolumeControllerProcess.HTML_PATH, ipcCallback);
@@ -37,7 +38,7 @@ export class VolumeControllerProcess extends Process {
         // });
 
         this.updateSessions();
-        setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
+        this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
 
     private updateSessions() {
@@ -52,7 +53,7 @@ export class VolumeControllerProcess extends Process {
             updatedSessions.push({ ...session, volume: this.getSessionVolume(session.pid), isMuted: this.isSessionMuted(session.pid) })
         });
         this.notifyObservers("vol-sessions", ...updatedSessions);
-        setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
+        this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
 
     public registerSettings(): Setting<unknown>[] {
@@ -64,12 +65,18 @@ export class VolumeControllerProcess extends Process {
 
         ];
     }
+
+
     public refreshSettings(): void {
         this.notifyObservers("session-pid-visibility-modified", this.getSettings().getSettingByName("Show Session PID").getValue());
-        
-
-
     }
+
+    public stop(): void {
+        clearTimeout(this.refreshTimeout);
+    }
+
+
+
     public receiveIPCEvent(eventType: string, data: any[]): void {
         switch (eventType) {
             case "init": {

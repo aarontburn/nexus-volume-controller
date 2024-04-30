@@ -33,8 +33,9 @@ interface Session {
     let isPIDVisible: boolean = false;
 
 
-    window.parent.ipc.on(MODULE_RENDERER_NAME, (_, eventType: string, data: any[]) => {
+    window.parent.ipc.on(MODULE_RENDERER_NAME, async (_, eventType: string, data: any[]) => {
         data = data[0]; // Data is wrapped in an extra array.
+        return 
         switch (eventType) {
             case "vol-sessions": {
                 refreshSessions(data);
@@ -71,6 +72,7 @@ interface Session {
                 sessionBoxHTML.className = 'session-box'
                 sessionBoxHTML.innerHTML = `
                     <p class='session-name'>${formattedName}</p>
+                    <div class='spacer'></div>
                     <p class='session-volume'>${roundedVolume}%</p>
                     <input class='vol-slider' type="range" min="0" max="100" value='${roundedVolume}'>
                     <div class='session-controls'>

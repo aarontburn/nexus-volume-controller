@@ -2,10 +2,13 @@
     font-size: 20px;
     padding: 0px;
     margin: 5px;
+    display: inline-block;
 }
 
 .session-volume {
-    text-align: center;
+    justify-content: center;
+    text-align: right;
+    display: inline-block;
 }
 
 #session-box-container {
@@ -14,8 +17,12 @@
     height: 100%;
     width: 100%;
     /* flex-wrap: wrap; */
-    overflow: visible;
+    overflow: visible;  
 
+}
+
+.spacer {
+    margin-right: auto;
 }
 
 .session-box {
@@ -24,15 +31,11 @@
     padding: 5px;
     margin: 5px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-grow: 1;
-
-
+    width: 100%;
 }
 
 .session-box>* {
-    text-align: center;
+    /* text-align: center; */
 }
 
 .vol-slider {}

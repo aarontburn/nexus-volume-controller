@@ -24,7 +24,10 @@ export class IPCHandler {
 
     public static fireEventToRenderer(target: IPCSource, eventType: string, ...data: any[]): void {
         IPCHandler.checkInit()
-        this.window.webContents.send(target.getIPCSource() + "-renderer", eventType, data);
+        try {
+            this.window.webContents.send(target.getIPCSource() + "-renderer", eventType, data);
+        } catch (err) {
+        }
     }
 
     public static fireEventToProcess(target: IPCSource, eventType: string, ...data: any[]): void {
