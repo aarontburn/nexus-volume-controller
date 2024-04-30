@@ -1,9 +1,9 @@
-import { Module } from "./Module";
+import { Process } from "./Process";
 import { SettingBox } from "./SettingBox";
 
 export abstract class Setting<T> {
 
-    public parentModule: Module;
+    public parentModule: Process;
     public settingName: string;
     public settingDescription: string;
     public settingId: string = this.generateRandomId()
@@ -29,7 +29,7 @@ export abstract class Setting<T> {
      *
      * @param theParentModule The module that this setting belongs to.
      */
-    public constructor(theParentModule: Module) {
+    public constructor(theParentModule: Process) {
         this.parentModule = theParentModule;
 
         this.settingBox = this.setUIComponent();
@@ -244,7 +244,7 @@ export abstract class Setting<T> {
         return this.settingId;
     }
 
-    public getParentModule(): Module {
+    public getParentModule(): Process {
         return this.parentModule;
     }
 

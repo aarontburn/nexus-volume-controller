@@ -1,5 +1,5 @@
-import { Setting } from "../../../module_builder/Setting";
-import { SettingBox } from "../../../module_builder/SettingBox";
+import { Setting } from "../../Setting";
+import { SettingBox } from "../../SettingBox";
 
 export class BooleanSettingBox extends SettingBox<boolean> {
     private parentSetting: Setting<boolean> = this.getSetting();

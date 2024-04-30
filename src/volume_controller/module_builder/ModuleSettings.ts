@@ -1,12 +1,12 @@
-import { Module } from "./Module";
+import { Process } from "./Process";
 import { Setting } from "./Setting";
 
 export class ModuleSettings {
     public settingsMap: Map<string, Setting<unknown>> = new Map<string, Setting<unknown>>();
-    public parentModule: Module;
+    public parentModule: Process;
     public settingsName: string;
 
-    public constructor(theModule: Module) {
+    public constructor(theModule: Process) {
         this.parentModule = theModule;
     }
 

@@ -1,21 +1,21 @@
-import { Setting } from "../../module_builder/Setting";
-import { Module } from "../../module_builder/Module";
 import * as path from "path";
-import { ModuleSettings } from "../../module_builder/ModuleSettings";
-import { SettingBox } from "../../module_builder/SettingBox";
 import { StorageHandler } from "../../StorageHandler";
-import { IPCCallback } from "../../module_builder/IPCObjects";
-import { BooleanSetting } from "../../module_builder/settings/types/BooleanSetting";
-import { HexColorSetting } from "../../module_builder/settings/types/HexColorSetting";
+import { IPCCallback } from "../../volume_controller/module_builder/IPCObjects";
+import { ModuleSettings } from "../../volume_controller/module_builder/ModuleSettings";
+import { Process } from "../../volume_controller/module_builder/Process";
+import { Setting } from "../../volume_controller/module_builder/Setting";
+import { SettingBox } from "../../volume_controller/module_builder/SettingBox";
+import { BooleanSetting } from "../../volume_controller/module_builder/settings/types/BooleanSetting";
+import { HexColorSetting } from "../../volume_controller/module_builder/settings/types/HexColorSetting";
 
-export class SettingsModule extends Module {
+export class SettingsProcess extends Process {
     public static MODULE_NAME: string = "Settings";
     private static HTML_PATH: string = path.join(__dirname, "./SettingsHTML.html").replace("dist", "src");
 
     private moduleSettingsList: ModuleSettings[] = [];
 
     public constructor(ipcCallback: IPCCallback) {
-        super(SettingsModule.MODULE_NAME, SettingsModule.HTML_PATH, ipcCallback);
+        super(SettingsProcess.MODULE_NAME, SettingsProcess.HTML_PATH, ipcCallback);
         this.getSettings().setSettingsName("General");
     }
 
@@ -70,7 +70,7 @@ export class SettingsModule extends Module {
     }
 
 
-    public recieveIpcEvent(eventType: string, data: any[]): void {
+    public receiveIPCEvent(eventType: string, data: any[]): void {
         switch (eventType) {
             case "settings-init": {
                 this.initialize();

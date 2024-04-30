@@ -1,5 +1,5 @@
 import { BrowserWindow } from "electron";
-import { IPCSource } from "./module_builder/IPCObjects";
+import { IPCSource } from "./volume_controller/module_builder/IPCObjects";
 
 // Note: This class should be used in the main process, not renderer process.
 export class IPCHandler {

@@ -5,9 +5,10 @@ import { Setting } from "./Setting";
 
 
 
-export abstract class Module implements IPCSource {
+export abstract class Process implements IPCSource {
 
     public moduleSettings = new ModuleSettings(this);
+
     public ipcCallback: IPCCallback;
     public moduleName: string;
     public hasBeenInit: boolean = false;
@@ -44,10 +45,11 @@ export abstract class Module implements IPCSource {
     }
 
     public initialize(): void {
-        // moduleGUI.initialize()
-
         this.hasBeenInit = true;
         // Override this, and do a super.initialize() after initializing model.
+
+
+        
     }
 
     public abstract registerSettings(): Setting<unknown>[];
@@ -71,7 +73,7 @@ export abstract class Module implements IPCSource {
         return this.moduleName;
     }
 
-    public abstract recieveIpcEvent(eventType: string, data: any[]): void
+    public abstract receiveIPCEvent(eventType: string, data: any[]): void
 
     public notifyObservers(eventType: string, ...data: any): void {
         this.ipcCallback.notifyRenderer(this, eventType, data);

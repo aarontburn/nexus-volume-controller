@@ -1,12 +1,12 @@
 import * as path from "path";
-import { Module } from "./module_builder/Module";
+import { Process } from "./module_builder/Process";
 import { IPCCallback } from "./module_builder/IPCObjects";
 import { NodeAudioVolumeMixer } from "node-audio-volume-mixer";
 import { Setting } from "./module_builder/Setting";
 import { BooleanSetting } from "./module_builder/settings/types/BooleanSetting";
 
 
-export class VolumeControllerModule extends Module {
+export class VolumeControllerProcess extends Process {
 
     private static MODULE_NAME = "Volume Controller";
 
@@ -19,7 +19,7 @@ export class VolumeControllerModule extends Module {
 
 
     public constructor(ipcCallback: IPCCallback) {
-        super(VolumeControllerModule.MODULE_NAME, VolumeControllerModule.HTML_PATH, ipcCallback);
+        super(VolumeControllerProcess.MODULE_NAME, VolumeControllerProcess.HTML_PATH, ipcCallback);
     }
 
     public initialize(): void {
@@ -37,7 +37,7 @@ export class VolumeControllerModule extends Module {
         // });
 
         this.updateSessions();
-        setTimeout(() => this.updateSessions(), VolumeControllerModule.VOLUME_REFRESH_MS);
+        setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
 
     private updateSessions() {
@@ -52,7 +52,7 @@ export class VolumeControllerModule extends Module {
             updatedSessions.push({ ...session, volume: this.getSessionVolume(session.pid), isMuted: this.isSessionMuted(session.pid) })
         });
         this.notifyObservers("vol-sessions", ...updatedSessions);
-        setTimeout(() => this.updateSessions(), VolumeControllerModule.VOLUME_REFRESH_MS);
+        setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
 
     public registerSettings(): Setting<unknown>[] {
@@ -70,7 +70,7 @@ export class VolumeControllerModule extends Module {
 
 
     }
-    public recieveIpcEvent(eventType: string, data: any[]): void {
+    public receiveIPCEvent(eventType: string, data: any[]): void {
         switch (eventType) {
             case "init": {
                 this.initialize();
