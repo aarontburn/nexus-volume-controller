@@ -33,8 +33,6 @@ export abstract class Setting<T> {
         this.parentModule = theParentModule;
 
         this.settingBox = this.setUIComponent();
-
-
     }
 
 
@@ -53,6 +51,7 @@ export abstract class Setting<T> {
                 + (this.defaultValue == null ? "DEFAULT" : ""));
         }
     }
+
 
 
     /**

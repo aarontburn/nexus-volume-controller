@@ -1,6 +1,6 @@
 import * as path from "path";
-import { Process } from "../../volume_controller/module_builder/Process";
 import { IPCCallback } from "../../volume_controller/module_builder/IPCObjects";
+import { Process } from "../../volume_controller/module_builder/Process";
 import { Setting } from "../../volume_controller/module_builder/Setting";
 import { NumericSetting } from "../../volume_controller/module_builder/settings/types/NumericSetting";
 import { StringSetting } from "../../volume_controller/module_builder/settings/types/StringSetting";
@@ -109,10 +109,18 @@ export class HomeProcess extends Process {
 					const s: string = o.toString();
 					return s == "" || s.match("^(?!.*(\\d).*\\1)[1-4\\s]+$") ? s : null;
 				}),
-
 		];
 	}
+
+
 	public refreshSettings(): void {
+		const sizes = {
+			fullDate: this.getSettings().getSettingByName('Full Date Font Size (1)').getValue(),
+			abbrDate: this.getSettings().getSettingByName('Abbreviated Date Font Size (2)').getValue(),
+			standardTime: this.getSettings().getSettingByName('Standard Time Font Size (3)').getValue(),
+			militaryTime: this.getSettings().getSettingByName('Military Time Font Size (4)').getValue()
+		}
+		this.notifyObservers('font-sizes', sizes);
 
 	}
 

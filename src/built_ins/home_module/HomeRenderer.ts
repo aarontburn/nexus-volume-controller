@@ -25,6 +25,16 @@
                 militaryTime.innerHTML = data[3];
                 break;
             }
+            case "font-sizes": {
+                console.log(data[0])
+                fullDate.style.fontSize = data[0].fullDate + "px";
+                abbreviatedDate.style.fontSize = data[0].abbrDate + "px";
+                standardTime.style.fontSize = data[0].standardTime + "px";
+                militaryTime.style.fontSize = data[0].militaryTime + "px";
+
+
+                break;
+            }
         }
     });
 })();

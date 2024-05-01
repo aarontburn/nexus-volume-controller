@@ -36,6 +36,10 @@ export class ModuleSettings {
         return this.settingsMap.get(theName);
     }
 
+    public getParentModule(): Process {
+        return this.parentModule;
+    }
+
 
 
 

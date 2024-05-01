@@ -25,7 +25,7 @@ export abstract class SettingBox<T> {
     public createLeft(): string {
         return `
             <div class="left-component" style="display: inline-block;">
-                <input id="${this.setting.getId()}" type="text" value='${this.setting.getValue()}'>
+                <input id="${this.setting.getId()}" type="${this.getInputType()}" value='${this.setting.getValue()}'>
             </div>
         `;
     }
@@ -48,14 +48,8 @@ export abstract class SettingBox<T> {
         return [this.setting.getId()];
     }
 
-    /**
-     * Overridable method to determine when the setting updates.
-     * This is triggered by element.addEventListener(<eventType> () => ...)
-     * 
-     * @returns The event to update the setting.
-     */
-    public getEventType(): string {
-        return "blur";
+    public getInputType(): string {
+        return "text";
     }
 
     /**

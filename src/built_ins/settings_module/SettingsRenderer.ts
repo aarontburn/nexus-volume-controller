@@ -39,12 +39,21 @@
 
                 break;
             }
+
+            case "swap-tab": {
+                console.log(data[0])
+                swapTabs(data[0]);
+
+                break;
+            }
         }
     });
 
     function populateSettings(data: any[]): void {
         data.forEach((obj: any) => {
             const moduleName: string = obj.module;
+
+            // Setting group click button
             const groupElement: HTMLElement = document.createElement("p");
             groupElement.innerText = moduleName;
             groupElement.addEventListener("click", () => {
@@ -54,35 +63,9 @@
                 currentlySelectedTab = groupElement;
                 currentlySelectedTab.setAttribute("style", "color: var(--accent-color);")
 
-                // Swap tabs
-                removeDivChildren(settingsList);
-                obj.settings.forEach((settingInfo: any) => {
-                    const interactiveIds: string[] = settingInfo.interactiveIds;
-                    const ui: string = settingInfo.ui;
-                    const style: string = settingInfo.style;
-                    const eventType: string = settingInfo.eventType;
-                    const attribute: string = settingInfo.attribute;
+                sendToProcess('swap-settings-tab', moduleName);
 
 
-                    settingsList.insertAdjacentHTML("beforeend", ui);
-                    // Add custom setting css to setting
-                    if (style != "") {
-                        const styleId = interactiveIds[0] + "_style";
-                        if (document.getElementById(styleId) == null) {
-                            const styleSheet: HTMLElement = document.createElement('style')
-                            styleSheet.id = styleId;
-                            styleSheet.innerHTML = style
-                            document.body.appendChild(styleSheet);
-                        }
-                    }
-                    interactiveIds.forEach((id: any) => {
-                        const element: any = document.getElementById(id);
-                        element.addEventListener(eventType, () => {
-                            sendToProcess("setting-modified", id, element[attribute]);
-                        });
-                    });
-
-                });
             });
 
             moduleList.insertAdjacentElement("beforeend", groupElement);
@@ -91,16 +74,70 @@
         });
     }
 
-    function removeDivChildren(parent: HTMLElement) {
-        while (parent.firstChild) {
-            parent.removeChild(parent.firstChild);
+    function swapTabs(tab: any): void {
+
+        // Clear existing settings
+        while (settingsList.firstChild) {
+            settingsList.removeChild(settingsList.firstChild);
         }
+
+
+        tab.settings.forEach((settingInfo: any) => {
+            const inputType: string = settingInfo.inputType;
+            const interactiveIds: string[] = settingInfo.interactiveIds;
+            const ui: string = settingInfo.ui;
+            const style: string = settingInfo.style;
+            const attribute: string = settingInfo.attribute;
+
+
+            settingsList.insertAdjacentHTML("beforeend", ui);
+            // Add custom setting css to setting
+            if (style != "") {
+                const styleId = interactiveIds[0] + "_style";
+                if (document.getElementById(styleId) == null) {
+                    const styleSheet: HTMLElement = document.createElement('style')
+                    styleSheet.id = styleId;
+                    styleSheet.innerHTML = style
+                    document.body.appendChild(styleSheet);
+                }
+            }
+            interactiveIds.forEach((id: string) => {
+                const element: HTMLElement = document.getElementById(id);
+
+                switch (inputType) {
+                    case "checkbox": {
+                        element.addEventListener('change', () => {
+                            sendToProcess("setting-modified", id, (element as any)[attribute]);
+                        });
+                        break;
+                    }
+                    case 'text': {
+                        element.addEventListener('keyup', (event: KeyboardEvent) => {
+                            if (event.key === "Enter") {
+                                sendToProcess("setting-modified", id, (element as any)[attribute]);
+                            }
+                        });
+
+                        element.addEventListener('blur', () => {
+                            sendToProcess("setting-modified", id, (element as any)[attribute]);
+                        });
+
+                        break;
+                    }
+                    // TODO: Add additional options
+                }
+
+
+            });
+
+        });
     }
+
 
 
     dragElement(document.getElementById("separator"));
 
-    function dragElement(element: HTMLElement): void {
+    function dragElement(element: HTMLElement) {
         let md: any;
         const left: HTMLElement = document.getElementById("left");
         const right: HTMLElement = document.getElementById("right");
@@ -114,7 +151,7 @@
                 secondWidth: right.offsetWidth
             };
 
-            document.onmousemove = (e: MouseEvent): void => {
+            document.onmousemove = (e: MouseEvent) => {
                 let delta: { x: number, y: number } = {
                     x: e.clientX - md.e.clientX,
                     y: e.clientY - md.e.clientY
