@@ -61,12 +61,45 @@ interface Session {
     const masterSessionBox: HTMLElement = document.getElementById('master-session');
     const masterSessionText: HTMLElement = document.getElementById('master-title');
     const masterVolumeText: HTMLElement = document.getElementById('master-volume-label');
+    const masterMuteButton: HTMLElement = document.getElementById('master-mute-button');
 
     masterSlider.addEventListener("input", (event: Event) => {
         const sliderValue: number = Number((event.target as HTMLInputElement).value);
         masterVolumeText.textContent = `${sliderValue.toString()}%`;
         sendToProcess("master-volume-modified", sliderValue);
     });
+
+    masterMuteButton.addEventListener('click', () => {
+        if (masterMuteButton.classList.contains('session-mute-active')) {
+            // unmute
+            setMasterMute(false);
+            sendToProcess('session-mute-state', false);
+
+            return;
+        }
+        sendToProcess('session-mute-state', true);
+        setMasterMute(true);
+
+    });
+
+    function setMasterMute(isMasterMuted: boolean) {
+        if (isMasterMuted) {
+            masterSessionBox.classList.add('muted-session-box');
+            masterSessionText.classList.add('session-muted');
+            masterSlider.classList.add('session-muted');
+            masterVolumeText.classList.add('session-muted');
+
+            masterMuteButton.classList.add('session-mute-active');
+            return;
+        }
+        masterSessionBox.classList.remove('muted-session-box');
+        masterSessionText.classList.remove('session-muted');
+        masterSlider.classList.remove('session-muted');
+        masterVolumeText.classList.remove('session-muted');
+
+        masterMuteButton.classList.remove('session-mute-active');
+
+    }
 
     function updateMaster(masterInfo: { isMuted: boolean, volume: number }): void {
         const isMuted: boolean = masterInfo.isMuted;
@@ -76,20 +109,7 @@ interface Session {
         masterSlider.value = String(volume);
 
         masterVolumeText.textContent = String(volume) + "%";
-
-        if (isMuted) {
-            masterSessionBox.classList.add('muted-session-box');
-            masterSessionText.classList.add('session-muted');
-            masterSlider.classList.add('session-muted');
-            masterVolumeText.classList.add('session-muted');
-        } else {
-            masterSessionBox.classList.remove('muted-session-box');
-            masterSessionText.classList.remove('session-muted');
-            masterSlider.classList.remove('session-muted');
-            masterVolumeText.classList.remove('session-muted');
-        }
-
-
+        setMasterMute(isMuted);
     }
 
 

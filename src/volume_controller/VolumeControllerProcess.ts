@@ -115,6 +115,12 @@ export class VolumeControllerProcess extends Process {
                 this.setMasterVolume(newMasterVolume/ 100);
                 break;
             }
+            case 'session-mute-state': {
+                const isMasterMuted: boolean = Boolean(data[0]);
+                this.setMasterMuted(isMasterMuted);
+
+                break;
+            }
 
         }
     }
