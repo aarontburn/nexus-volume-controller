@@ -80,8 +80,6 @@ export class SettingsProcess extends Process {
                 const elementId: string = data[0];
                 const elementValue: string = data[1];
 
-                console.log(elementId + ": " + elementValue)
-
                 for (const moduleSettings of this.moduleSettingsList) {
                     const settingsList: Setting<unknown>[] = moduleSettings.getSettingsList();
 

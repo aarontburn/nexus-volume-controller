@@ -21,7 +21,7 @@ interface Session {
     console.log(MODULE_RENDERER_NAME + " initialzed.");
 
     const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, data);
+        window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);
     }
 
 
@@ -133,9 +133,9 @@ interface Session {
 
 
     function setMuteButton(sessionPID: number, muteButton: HTMLElement, isMuted: boolean): void {
-        const sessionMuteActive = 'session-mute-active';
-        const sessionMuted = 'session-muted';
-        const grayScalableElements = document.querySelectorAll(`#session-${sessionPID} .gray-scalable`);
+        const sessionMuteActive: string = 'session-mute-active';
+        const sessionMuted: string = 'session-muted';
+        const grayScalableElements: NodeListOf<Element> = document.querySelectorAll(`#session-${sessionPID} .gray-scalable`);
 
         if (isMuted) {
             muteButton.classList.add(sessionMuteActive);
