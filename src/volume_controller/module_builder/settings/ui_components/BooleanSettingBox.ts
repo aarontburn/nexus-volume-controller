@@ -8,7 +8,7 @@ export class BooleanSettingBox extends SettingBox<boolean> {
         return `
             <div class="left-component">
                 <label class="switch">
-                    <input type="checkbox" id="${this.parentSetting.getId()}" checked="${this.parentSetting.getValue()}">
+                    <input type="checkbox" id="${this.parentSetting.getId()}" ${this.parentSetting.getValue() ? 'checked' : ''}>
                     <span class="slider round"></span>
                 </label>   
             </div> 

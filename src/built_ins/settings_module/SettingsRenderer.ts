@@ -3,7 +3,7 @@
     const MODULE_PROCESS_NAME = MODULE_NAME.toLowerCase() + "-process";
     const MODULE_RENDERER_NAME = MODULE_NAME.toLowerCase() + "-renderer"
     const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, data);
+        window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);
     }
 
     sendToProcess("settings-init");
@@ -63,6 +63,7 @@
                     const eventType: string = settingInfo.eventType;
                     const attribute: string = settingInfo.attribute;
 
+
                     settingsList.insertAdjacentHTML("beforeend", ui);
                     // Add custom setting css to setting
                     if (style != "") {
@@ -74,11 +75,11 @@
                             document.body.appendChild(styleSheet);
                         }
                     }
-                    interactiveIds.forEach((id: string) => {
+                    interactiveIds.forEach((id: any) => {
                         const element: any = document.getElementById(id);
                         element.addEventListener(eventType, () => {
                             sendToProcess("setting-modified", id, element[attribute]);
-                        })
+                        });
                     });
 
                 });
@@ -99,7 +100,7 @@
 
     dragElement(document.getElementById("separator"));
 
-    function dragElement(element: HTMLElement) {
+    function dragElement(element: HTMLElement): void {
         let md: any;
         const left: HTMLElement = document.getElementById("left");
         const right: HTMLElement = document.getElementById("right");
@@ -113,7 +114,7 @@
                 secondWidth: right.offsetWidth
             };
 
-            document.onmousemove = (e: MouseEvent) => {
+            document.onmousemove = (e: MouseEvent): void => {
                 let delta: { x: number, y: number } = {
                     x: e.clientX - md.e.clientX,
                     y: e.clientY - md.e.clientY

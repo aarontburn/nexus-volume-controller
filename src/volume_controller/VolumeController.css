@@ -1,44 +1,138 @@
-.session-name {
-    font-size: 20px;
-    padding: 0px;
-    margin: 5px;
-    display: inline-block;
+/* Splitpane CSS */
+.splitter {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
 }
 
-.session-volume {
+#left {
+    width: 30vw;
+    height: 100%;
+    min-width: 200px;
+    text-align: center;
+    overflow-y: hidden;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    text-align: right;
-    display: inline-block;
+
 }
+
+#right {
+    width: 70vw;
+    height: 100%;
+    min-width: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#separator {
+    cursor: col-resize;
+    background-color: var(--accent-color);
+    width: 10px;
+    height: 100%;
+    min-width: 10px;
+
+    /* Prevent the browser's built-in drag from interfering */
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* ------- */
+.vol-slider {}
+
+
+
 
 #session-box-container {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 98%;
     width: 100%;
-    /* flex-wrap: wrap; */
-    overflow: visible;  
-
 }
 
-.spacer {
-    margin-right: auto;
+#master-session {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    border: 1px white solid;
+    border-radius: 5px;
+    margin: 5px;
+    height: 98%;
+    width: 100%;
 }
 
+#master-vol-slider {
+    appearance: slider-vertical;
+    height: 85%;
+}
+
+
+/* Session Volume Container Components */
 .session-box {
     border: 1px solid white;
     border-radius: 5px;
     padding: 5px;
-    margin: 5px;
     display: flex;
-    width: 100%;
+
+    margin: 0px 5px 5px 5px;
 }
 
-.session-box>* {
-    /* text-align: center; */
+
+
+.session-name {
+    font-size: 20px;
+    padding: 0px;
+    margin: 5px;
+    line-height: 2em;
 }
 
-.vol-slider {}
+.session-volume {
+    justify-content: center;
+    font-size: 25px;
+    line-height: 0.2em;
+    width: 4em;
+    text-align: right;
+    margin-right: 5%;
+    margin-left: 2.5%;
+}
+
+.session-controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%
+}
+
+
+.session-mute-solo-group {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.session-controls p {
+    margin: 0px 15px;
+    line-height: 1em;
+}
+
+.session-mute-active,
+.session-solo-active {
+    color: var(--accent-color);
+}
+
+.session-muted {
+    opacity: 0.5;
+}
+
+
+
+/* ------------- */
+
+
 
 
 #session-settings {
@@ -48,35 +142,4 @@
     border-radius: 5px;
     padding: 5px;
     margin: 5px;
-
-}
-
-#master-session {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    border: 1px white solid;
-    height: 100%;
-    border-radius: 5px;
-    margin: 5px;
-}
-
-#master-vol-slider {
-    appearance: slider-vertical;
-    height: 85%;
-}
-
-.session-controls {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-}
-
-.session-controls p {
-    margin: 5px 15px;
-}
-
-.session-mute-active,
-.session-solo-active {
-    color: var(--accent-color);
 }

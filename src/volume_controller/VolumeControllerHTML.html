@@ -20,20 +20,35 @@
 
 
 <body>
+    <div class="splitter">
 
-    <div style="display: flex; height: 100%;">
-        <div style="border: 1px white solid; border-radius: 5px; display: inline-block; height: 100%;">
+        <div id="left">
             <div id="master-session">
                 <p style="font-size: 25px;">Master Volume</p>
                 <input id="master-vol-slider" type="range" min="0" max="100">
             </div>
         </div>
+        
+        <div id="separator"></div>
 
-        <div style="border: 1px white solid; border-radius: 5px; display: inline-block; width: 75%; height: 100%">
+        <div id="right">
+            <div id="session-box-container">
+
+            </div>
+        </div>
+
+
+<!-- 
+    <div style="display: flex; height: 100%;">
+        <div style="border: 1px white solid; border-radius: 5px; flex: 25%;">
+
+        </div>
+
+        <div style="border: 1px white solid; border-radius: 5px; display: inline-block; flex: 75%">
             <p>2</p>
 
         </div>
-    </div>
+    </div> -->
 
 
 
@@ -50,16 +65,13 @@
                     </select>
                 </div>
 
-                <div id="session-box-container">
-
-                </div>
+   
             
 
             </div>
         </div>
 
     </div>  -->
-
 
 
 
