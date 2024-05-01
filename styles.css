@@ -10,7 +10,8 @@ body {
 .box {
   display: flex;
   flex-flow: column;
-  height: 100%;
+  height: 100vh;
+  width: 100vw;
 }
 
 .box .row {
@@ -19,16 +20,16 @@ body {
 
 .box .header {
   flex: 0 1 auto;
+  border-bottom: 1px var(--off-white) solid;
 }
 
 .box .content {
   flex: 1 1 auto;
 }
 
-#modules {
-  border: 0px black solid;
+#modules > iframe {
+  border-style: hidden;
 }
-
 
 .header button {
   color: var(--off-white);
@@ -41,3 +42,5 @@ body {
   background: none;
   font-weight: normal;
 }
+
+

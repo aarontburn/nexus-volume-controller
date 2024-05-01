@@ -33,9 +33,14 @@ interface Session {
     let isPIDVisible: boolean = false;
 
 
+
     window.parent.ipc.on(MODULE_RENDERER_NAME, async (_, eventType: string, data: any[]) => {
         data = data[0]; // Data is wrapped in an extra array.
         switch (eventType) {
+            case 'master-update': {
+                updateMaster(data[0]);
+                break;
+            }
             case "vol-sessions": {
                 refreshSessions(data);
                 break;
@@ -50,6 +55,43 @@ interface Session {
             }
         }
     });
+
+
+    const masterSlider: HTMLInputElement = document.getElementById('master-vol-slider') as HTMLInputElement;
+    const masterSessionBox: HTMLElement = document.getElementById('master-session');
+    const masterSessionText: HTMLElement = document.getElementById('master-title');
+    const masterVolumeText: HTMLElement = document.getElementById('master-volume-label');
+
+    masterSlider.addEventListener("input", (event: Event) => {
+        const sliderValue: number = Number((event.target as HTMLInputElement).value);
+        masterVolumeText.textContent = `${sliderValue.toString()}%`;
+        sendToProcess("master-volume-modified", sliderValue);
+    });
+
+    function updateMaster(masterInfo: { isMuted: boolean, volume: number }): void {
+        const isMuted: boolean = masterInfo.isMuted;
+        const masterVolume: number = masterInfo.volume;
+
+        const volume: number = Math.round(masterVolume * 100)
+        masterSlider.value = String(volume);
+
+        masterVolumeText.textContent = String(volume) + "%";
+
+        if (isMuted) {
+            masterSessionBox.classList.add('muted-session-box');
+            masterSessionText.classList.add('session-muted');
+            masterSlider.classList.add('session-muted');
+            masterVolumeText.classList.add('session-muted');
+        } else {
+            masterSessionBox.classList.remove('muted-session-box');
+            masterSessionText.classList.remove('session-muted');
+            masterSlider.classList.remove('session-muted');
+            masterVolumeText.classList.remove('session-muted');
+        }
+
+
+    }
+
 
 
     function refreshSessions(data: any[]): void {
@@ -92,7 +134,7 @@ interface Session {
                 slider.addEventListener("input", (event: Event) => {
                     const sliderValue: number = Number((event.target as HTMLInputElement).value);
                     sessionBoxHTML.querySelector(".session-volume").textContent = `${sliderValue.toString()}%`;
-                    window.ipc.send(MODULE_PROCESS_NAME, "volume-modified", session.pid, sliderValue);
+                    sendToProcess("volume-modified", session.pid, sliderValue);
                 });
 
                 const muteButton: HTMLElement = sessionBoxHTML.querySelector('.session-mute');
@@ -135,22 +177,33 @@ interface Session {
     function setMuteButton(sessionPID: number, muteButton: HTMLElement, isMuted: boolean): void {
         const sessionMuteActive: string = 'session-mute-active';
         const sessionMuted: string = 'session-muted';
+
+        const sessionBox: Element = document.getElementById(`session-${sessionPID}`);
         const grayScalableElements: NodeListOf<Element> = document.querySelectorAll(`#session-${sessionPID} .gray-scalable`);
 
         if (isMuted) {
             muteButton.classList.add(sessionMuteActive);
+            sessionBox?.classList.add('muted-session-box');
 
             // Make specific elements grayed
-            grayScalableElements.forEach(element => {
+            for (let i = 0; i < grayScalableElements.length; i++) {
+                const element = grayScalableElements.item(i);
                 element.classList.add(sessionMuted);
-            });
+            }
+
             return;
         }
 
         muteButton.classList.remove(sessionMuteActive);
-        grayScalableElements.forEach(element => {
+        sessionBox?.classList.remove('muted-session-box');
+
+
+        for (let i = 0; i < grayScalableElements.length; i++) {
+            const element = grayScalableElements.item(i);
             element.classList.remove(sessionMuted);
-        });
+        }
+
+
     }
 
 

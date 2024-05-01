@@ -5,7 +5,7 @@
 // Use preload.js to selectively enable features
 // needed in the renderer process.
 
-const IFRAME_DEFAULT_STYLE: string = "height: 99.7%; width: 99.85%;";
+const IFRAME_DEFAULT_STYLE: string = "height: 100%; width: 100%;";
 let selectedTab: HTMLElement = undefined;
 
 window.ipc.send(window.constants.MAIN, "renderer-init"); // let main know that renderer is booted

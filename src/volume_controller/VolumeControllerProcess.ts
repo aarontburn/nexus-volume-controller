@@ -42,7 +42,16 @@ export class VolumeControllerProcess extends Process {
     }
 
     private updateSessions() {
+        // Master
+        const masterInfo: { isMuted: boolean, volume: number } = {
+            isMuted: this.isMasterMuted(),
+            volume: this.getMasterVolume()
+        }
 
+        this.notifyObservers('master-update', masterInfo)
+
+
+        // Individual sessions
         const sessions = NodeAudioVolumeMixer.getAudioSessionProcesses();
 
         const updatedSessions: { pid: number, name: string, volume: number, isMuted: boolean }[] = [];
@@ -101,6 +110,11 @@ export class VolumeControllerProcess extends Process {
                 this.toggleSolo(sessionPID);
                 break;
             }
+            case "master-volume-modified": {
+                const newMasterVolume: number = Number(data[0]);
+                this.setMasterVolume(newMasterVolume/ 100);
+                break;
+            }
 
         }
     }
@@ -135,9 +149,7 @@ export class VolumeControllerProcess extends Process {
         console.log("Toggling mute for session: " + pid);
     }
 
-    private setMasterMuted(isMuted: boolean): void {
-        NodeAudioVolumeMixer.muteMaster(isMuted);
-    }
+
 
     private setSessionVolume(pid: number, volume: number): void {
         if (volume > 1 || volume < 0) {
@@ -147,13 +159,6 @@ export class VolumeControllerProcess extends Process {
         NodeAudioVolumeMixer.setAudioSessionVolumeLevelScalar(pid, volume);
     }
 
-    private setMasterVolume(volume: number): void {
-        if (volume > 1 || volume < 0) {
-            console.log("ERROR (VolumeControllerModule): Volume out of range 0.0 - 1.0: " + volume + " for master")
-            return;
-        }
-        NodeAudioVolumeMixer.setMasterVolumeLevelScalar(volume);
-    }
 
     private getSessionVolume(pid: number): number {
         return NodeAudioVolumeMixer.getAudioSessionVolumeLevelScalar(pid);
@@ -167,8 +172,27 @@ export class VolumeControllerProcess extends Process {
         return NodeAudioVolumeMixer.isAudioSessionMuted(pid);
     }
 
+
+    private getMasterVolume(): number {
+        return NodeAudioVolumeMixer.getMasterVolumeLevelScalar();
+    }
+
+    private setMasterVolume(volume: number): void {
+        if (volume > 1 || volume < 0) {
+            console.log("ERROR (VolumeControllerModule): Volume out of range 0.0 - 1.0: " + volume + " for master")
+            return;
+        }
+        NodeAudioVolumeMixer.setMasterVolumeLevelScalar(volume);
+    }
+
     private isMasterMuted(): boolean {
         return NodeAudioVolumeMixer.isMasterMuted();
     }
+
+    private setMasterMuted(isMuted: boolean): void {
+        NodeAudioVolumeMixer.muteMaster(isMuted);
+    }
+
+
 
 }
