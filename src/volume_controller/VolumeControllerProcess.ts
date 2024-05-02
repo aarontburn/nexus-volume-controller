@@ -4,6 +4,7 @@ import { IPCCallback } from "./module_builder/IPCObjects";
 import { NodeAudioVolumeMixer } from "node-audio-volume-mixer";
 import { Setting } from "./module_builder/Setting";
 import { BooleanSetting } from "./module_builder/settings/types/BooleanSetting";
+import { exec } from 'child_process';
 
 
 export class VolumeControllerProcess extends Process {
@@ -17,7 +18,7 @@ export class VolumeControllerProcess extends Process {
 
     private static VOLUME_REFRESH_MS = 500;
 
-	private refreshTimeout: NodeJS.Timeout;
+    private refreshTimeout: NodeJS.Timeout;
 
     public constructor(ipcCallback: IPCCallback) {
         super(VolumeControllerProcess.MODULE_NAME, VolumeControllerProcess.HTML_PATH, ipcCallback);
@@ -41,6 +42,15 @@ export class VolumeControllerProcess extends Process {
         this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
 
+    private regex = /[^\u0000-\u00ff]/; // Small performance gain from pre-compiling the regex
+    private isValidUnicode(str: string) {
+        if (!str.length || str.charCodeAt(0) > 255) {
+            return false;
+        }
+        return !this.regex.test(str);
+    }
+
+
     private updateSessions() {
         // Master
         const masterInfo: { isMuted: boolean, volume: number } = {
@@ -52,15 +62,23 @@ export class VolumeControllerProcess extends Process {
 
 
         // Individual sessions
-        const sessions = NodeAudioVolumeMixer.getAudioSessionProcesses();
+        const sessions: any[] = NodeAudioVolumeMixer.getAudioSessionProcesses();
 
         const updatedSessions: { pid: number, name: string, volume: number, isMuted: boolean }[] = [];
         sessions.forEach((session) => {
             if (session.pid === 0) {
-                session.name = "System Volume"
+                session.name = "System Volume";
             }
+
+            if (!this.isValidUnicode(session.name)) {
+                exec(`wmic process get Name | find "${session.pid}"`, (err, stdout, stderr) =>{
+                    console.log(stdout)
+                });
+            }
+
             updatedSessions.push({ ...session, volume: this.getSessionVolume(session.pid), isMuted: this.isSessionMuted(session.pid) })
         });
+
         this.notifyObservers("vol-sessions", ...updatedSessions);
         this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
@@ -112,7 +130,7 @@ export class VolumeControllerProcess extends Process {
             }
             case "master-volume-modified": {
                 const newMasterVolume: number = Number(data[0]);
-                this.setMasterVolume(newMasterVolume/ 100);
+                this.setMasterVolume(newMasterVolume / 100);
                 break;
             }
             case 'session-mute-state': {
