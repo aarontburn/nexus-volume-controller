@@ -4,7 +4,20 @@ import { IPCCallback } from "./module_builder/IPCObjects";
 import { NodeAudioVolumeMixer } from "node-audio-volume-mixer";
 import { Setting } from "./module_builder/Setting";
 import { BooleanSetting } from "./module_builder/settings/types/BooleanSetting";
-import { exec } from 'child_process';
+import { exec as lameExec } from 'child_process'
+import { promisify } from 'util';
+import SoundMixer, { AudioSession, Device, DeviceType } from "native-sound-mixer";
+
+const exec = promisify(lameExec);
+
+
+interface Session {
+    pid: number,
+    name: string,
+    volume: number,
+    isMuted: boolean
+
+}
 
 
 export class VolumeControllerProcess extends Process {
@@ -42,46 +55,137 @@ export class VolumeControllerProcess extends Process {
         this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
 
-    private regex = /[^\u0000-\u00ff]/; // Small performance gain from pre-compiling the regex
-    private isValidUnicode(str: string) {
-        if (!str.length || str.charCodeAt(0) > 255) {
-            return false;
+
+
+
+    // private regex = /[^\u0000-\u00ff]/; // Small performance gain from pre-compiling the regex
+    // private isValidUnicode(str: string) {
+    //     if (!str.length || str.charCodeAt(0) > 255) {
+    //         return false;
+    //     }
+    //     return !this.regex.test(str);
+    // }
+
+    private async nameFromPath(path: string) {
+        if (!path) {
+            return "System Volume";
         }
-        return !this.regex.test(str);
+
+        try {
+            const command = `(Get-Item "${path}").VersionInfo.FileDescription`
+            const { stdout, stderr } = await exec(command, { 'shell': 'powershell.exe' });
+            if (stdout) {
+                return stdout.trim();
+            }
+            // console.log('stdout:', stdout);
+            console.log('stderr:', stderr);
+        } catch (e) {
+            console.error(e); // should contain code (exit code) and signal (that caused the termination).
+        }
+        return null;
     }
 
 
-    private updateSessions() {
+    private pathToPIDMap: Map<string, number> = new Map();
+    private pidToSessionMap: Map<number, Session> = new Map();
+
+    private generatePID(): number {
+        return Math.floor(Math.random() * 5);
+    }
+
+
+    private async getSessionInformation(): Promise<Session[]> {
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        const sessions: AudioSession[] = masterDevice.sessions;
+
+        const sessionList: Session[] = []
+
+        sessions.forEach(async session => {
+            const path = session.appName;
+            const sessionName: string | null = await this.nameFromPath(path);
+
+            if (!sessionName) {
+                console.log("Error getting name for " + session);
+                return;
+            }
+            // console.log()
+            // console.log("Path: " + path);
+            // console.log("Resolved Name: " + sessionName);
+            // console.log("Internal Name: " + session.name)
+            // console.log("Volume: " + session.volume)
+            // console.log("Muted: " + session.mute)
+
+            let newSession: boolean = false;
+            let pid = this.pathToPIDMap.get(path);
+            if (pid === undefined) {
+                pid = this.generatePID();
+                this.pathToPIDMap.set(path, pid);
+                newSession = true;
+            }
+
+            const sessionObject: Session = {
+                pid: pid,
+                name: sessionName,
+                volume: session.volume,
+                isMuted: session.mute
+            }
+            if (newSession) {
+                this.pidToSessionMap.set(pid, sessionObject);
+            }
+            sessionList.push(sessionObject);
+
+
+        });
+        return sessionList;
+
+    }
+
+
+    private async updateSessions() {
         // Master
         const masterInfo: { isMuted: boolean, volume: number } = {
             isMuted: this.isMasterMuted(),
             volume: this.getMasterVolume()
         }
 
-        this.notifyObservers('master-update', masterInfo)
+        this.notifyObservers('master-update', masterInfo);
 
 
         // Individual sessions
-        const sessions: any[] = NodeAudioVolumeMixer.getAudioSessionProcesses();
+        await this.getSessionInformation().then((sessions: Session[]) => {
 
-        const updatedSessions: { pid: number, name: string, volume: number, isMuted: boolean }[] = [];
-        sessions.forEach((session) => {
-            if (session.pid === 0) {
-                session.name = "System Volume";
-            }
-
-            if (!this.isValidUnicode(session.name)) {
-                exec(`wmic process get Name | find "${session.pid}"`, (err, stdout, stderr) =>{
-                    console.log(stdout)
-                });
-            }
-
-            updatedSessions.push({ ...session, volume: this.getSessionVolume(session.pid), isMuted: this.isSessionMuted(session.pid) })
         });
 
-        this.notifyObservers("vol-sessions", ...updatedSessions);
-        this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
+
+
+        // const sessions: any[] = NodeAudioVolumeMixer.getAudioSessionProcesses();
+
+        // const updatedSessions: { pid: number, name: string, volume: number, isMuted: boolean }[] = [];
+        // sessions.forEach((session) => {
+        //     if (session.pid === 0) {
+        //         session.name = "System Volume";
+        //     }
+
+        //     if (!this.isValidUnicode(session.name)) {
+        //         exec(command, (err, stdout, stderr) =>{
+        //             if (err) {
+        //                 console.error(err);
+        //                 return;
+        //             }
+
+        //             console.log("out: " + stdout)
+        //             console.log("err: " + stderr)
+        //         });
+        //     }
+
+        //     updatedSessions.push({ ...session, volume: this.getSessionVolume(session.pid), isMuted: this.isSessionMuted(session.pid) })
+        // });
+
+        // this.notifyObservers("vol-sessions", ...updatedSessions);
+        // this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
     }
+
+
 
     public registerSettings(): Setting<unknown>[] {
         return [
@@ -198,6 +302,9 @@ export class VolumeControllerProcess extends Process {
 
 
     private getMasterVolume(): number {
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        return masterDevice.volume;
+
         return NodeAudioVolumeMixer.getMasterVolumeLevelScalar();
     }
 
@@ -206,15 +313,22 @@ export class VolumeControllerProcess extends Process {
             console.log("ERROR (VolumeControllerModule): Volume out of range 0.0 - 1.0: " + volume + " for master")
             return;
         }
-        NodeAudioVolumeMixer.setMasterVolumeLevelScalar(volume);
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        masterDevice.volume = volume
+
+        // NodeAudioVolumeMixer.setMasterVolumeLevelScalar(volume);
     }
 
     private isMasterMuted(): boolean {
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        return masterDevice.mute;
         return NodeAudioVolumeMixer.isMasterMuted();
     }
 
     private setMasterMuted(isMuted: boolean): void {
-        NodeAudioVolumeMixer.muteMaster(isMuted);
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        masterDevice.mute = isMuted;
+        // NodeAudioVolumeMixer.muteMaster(isMuted);
     }
 
 
