@@ -42,7 +42,7 @@ interface Session {
                 break;
             }
             case "vol-sessions": {
-                refreshSessions(data);
+                refreshSessions(data[0]);
                 break;
             }
             case "session-pid-visibility-modified": {
@@ -162,17 +162,13 @@ interface Session {
                 muteButton.addEventListener("click", () => {
                     sendToProcess('session-muted', session.pid);
                     setMuteButton(session.pid, muteButton, !muteButton.classList.contains("session-mute-active"));
-
                 });
 
                 const soloButton: HTMLElement = sessionBoxHTML.querySelector('.session-solo');
                 soloButton.addEventListener("click", () => {
                     sendToProcess('session-solo', session.pid);
-                    sessionHTMLMap.forEach((html, pid) => {
-                        if (pid !== session.pid) {
-                            setMuteButton(pid, html.querySelector(".session-mute"), true);
-                        }
-                    });
+                    toggleSolo(session.pid);
+
 
                 });
 
@@ -191,6 +187,76 @@ interface Session {
                 sessionObjMap.delete(pid);
             }
         });
+    }
+
+    /*
+        If session is muted, unmute it and mute all others
+
+        If session is unmuted
+            Check if all the other sessions are muted
+                If all other sessions are muted,
+                    Unmute all sessions
+                If not all other sessions are muted,
+                    mute all sessions
+    */
+
+    function toggleSolo(soloedSessionPID: number): void {
+        if (sessionObjMap.get(soloedSessionPID).isMuted === true) { // soloed track is muted. unmute it an mute others
+            sessionHTMLMap.forEach((html, pid) => {
+                if (pid === soloedSessionPID) {
+                    setMuteButton(pid, html.querySelector(".session-mute"), false);
+                } else {
+                    setMuteButton(pid, html.querySelector(".session-mute"), true);
+
+                }
+            });
+            return;
+        }
+
+
+
+        let allMuted = true;
+        sessionObjMap.forEach((session, pid) => {
+            if (pid === soloedSessionPID) {
+                return;
+            }
+
+            if (session.isMuted === false) {
+                allMuted = false;
+            }
+        });
+
+        if (allMuted) {
+            console.log("removing solo");
+
+            sessionHTMLMap.forEach((html, pid) => {
+                setMuteButton(pid, html.querySelector(".session-mute"), false);
+            });
+        } else {
+            console.log("applying solo");
+            sessionHTMLMap.forEach((html, pid) => {
+                if (pid === soloedSessionPID) {
+                    setMuteButton(pid, html.querySelector(".session-mute"), false);
+                } else {
+                    setMuteButton(pid, html.querySelector(".session-mute"), true);
+
+                }
+            });
+        }
+
+
+
+        // if (allMuted) { // All tracks are already muted
+        //     if (!sessionObjMap.get(soloedSessionPID).isMuted) { // Solo already applied, remove it
+        //         console.log("Removing solo");
+
+        //     } else { // Solo not applied since session is muted, unmute session
+        //         setMuteButton(soloedSessionPID, sessionHTMLMap.get(soloedSessionPID).querySelector(".session-mute"), false);
+        //     }
+        // } else { // Apply solo
+        //     console.log("applying solo");
+
+        // }
     }
 
 
