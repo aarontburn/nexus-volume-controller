@@ -42,6 +42,7 @@ interface Session {
                 break;
             }
             case "vol-sessions": {
+                console.log(data[0])
                 refreshSessions(data[0]);
                 break;
             }
@@ -158,6 +159,7 @@ interface Session {
                 });
 
                 const muteButton: HTMLElement = sessionBoxHTML.querySelector('.session-mute');
+
                 setMuteButton(session.pid, muteButton, session.isMuted);
                 muteButton.addEventListener("click", () => {
                     sendToProcess('session-muted', session.pid);
@@ -261,6 +263,9 @@ interface Session {
 
 
     function setMuteButton(sessionPID: number, muteButton: HTMLElement, isMuted: boolean): void {
+        if (sessionPID === 247455286303) {
+            console.log(isMuted)
+        }
         const sessionMuteActive: string = 'session-mute-active';
         const sessionMuted: string = 'session-muted';
 

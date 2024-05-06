@@ -43,6 +43,28 @@ export class SessionController {
 
 
     public static async getSessions(): Promise<Session[]> {
+
+        // const sessions: any[] = NodeAudioVolumeMixer.getAudioSessionProcesses();
+
+        // const updatedSessions: Session[] = [];
+        // sessions.forEach((session) => {
+        //     if (session.pid === 0) {
+        //         session.name = "System Volume"
+        //         session.name = "System Volume";
+        //     }
+
+        //     if (!this.isValidUnicode(session.name)) {
+        //         exec(`wmic process get Name | find "${session.pid}"`, (err, stdout, stderr) => {
+        //             console.log(stdout)
+        //         });
+        //     }
+
+        //     updatedSessions.push({ ...session, volume: this.getSessionVolume(session.pid), isMuted: this.isSessionMuted(session.pid) })
+        // });
+        // return updatedSessions;
+
+
+
         const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
         const sessions: AudioSession[] = masterDevice.sessions;
 
@@ -169,6 +191,31 @@ export class SessionController {
 
 
 
+    private static REGEX = /[^\u0000-\u00ff]/; // Small performance gain from pre-compiling the regex
+    private static isValidUnicode(str: string) {
+        if (!str.length || str.charCodeAt(0) > 255) {
+            return false;
+        }
+        return !this.REGEX.test(str);
+    }
+
+    private static async getProcessName(pid: number): Promise<string | null> {
+        let error: any;
+        try {
+            const { stdout, stderr } = await exec(`wmic process get Name | find "${pid}"`);
+            if (stdout) {
+                return stdout.trim().split(" ").filter(i => i)[1];
+            }
+            error = stderr;
+
+        } catch (e) {
+            error = e;
+        }
+
+        console.error(error);
+        return null;
+    }
+
 
     private static async nameFromPath(path: string): Promise<string | null> {
         let error: any;
@@ -182,12 +229,12 @@ export class SessionController {
             error = stderr;
         } catch (e) {
             if (!path) {
-                return "Session Volume";
+                return "System Volume";
             }
             error = e;
         }
         if (!path) {
-            return "Session Volume";
+            return "System Volume";
         }
 
         console.error(error);

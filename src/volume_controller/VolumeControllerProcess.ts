@@ -30,7 +30,7 @@ export class VolumeControllerProcess extends Process {
     private static HTML_PATH: string = path.join(__dirname, "./VolumeControllerHTML.html").replace("dist", "src");
 
 
-    private static VOLUME_REFRESH_MS = 500;
+    private static VOLUME_REFRESH_MS = 1000;
 
     private refreshTimeout: NodeJS.Timeout;
 
@@ -49,6 +49,7 @@ export class VolumeControllerProcess extends Process {
 
 
     private async updateSessions() {
+
         // Master
         const masterInfo: { isMuted: boolean, volume: number } = {
             isMuted: SessionController.isMasterMuted(),
@@ -60,6 +61,7 @@ export class VolumeControllerProcess extends Process {
 
         // Individual sessions
         await SessionController.getSessions().then((sessions: Session[]) => {
+            console.log(sessions)
             this.notifyObservers("vol-sessions", sessions);
             this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
         });
