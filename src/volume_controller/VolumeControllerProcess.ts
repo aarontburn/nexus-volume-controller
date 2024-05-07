@@ -1,24 +1,14 @@
 import * as path from "path";
 import { Process } from "./module_builder/Process";
 import { IPCCallback } from "./module_builder/IPCObjects";
-import { NodeAudioVolumeMixer } from "node-audio-volume-mixer";
 import { Setting } from "./module_builder/Setting";
 import { BooleanSetting } from "./module_builder/settings/types/BooleanSetting";
 import { exec as lameExec } from 'child_process'
 import { promisify } from 'util';
-import SoundMixer, { AudioSession, Device, DeviceType } from "native-sound-mixer";
 import { SessionController } from "./SessionController";
 
 const exec = promisify(lameExec);
 
-
-interface Session {
-    pid: number,
-    name: string,
-    volume: number,
-    isMuted: boolean
-
-}
 
 
 export class VolumeControllerProcess extends Process {
@@ -59,13 +49,8 @@ export class VolumeControllerProcess extends Process {
         this.notifyObservers('master-update', masterInfo);
 
 
-        // Individual sessions
-        await SessionController.getSessions().then((sessions: Session[]) => {
-            console.log(sessions)
-            this.notifyObservers("vol-sessions", sessions);
-            this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
-        });
-
+        this.notifyObservers("vol-sessions", SessionController.getSessions());
+        this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
 
     }
 

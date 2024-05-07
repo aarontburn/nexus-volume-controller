@@ -1,12 +1,4 @@
-import { exec as lameExec } from 'child_process'
-import { promisify } from 'util';
 import SoundMixer, { AudioSession, Device, DeviceType } from "native-sound-mixer";
-import { NodeAudioVolumeMixer } from "node-audio-volume-mixer";
-import * as crypto from 'crypto';
-
-
-const exec = promisify(lameExec);
-
 
 export interface Session {
     pid: number,
@@ -18,11 +10,9 @@ export interface Session {
 export class SessionController {
 
 
-    private static pidToSessionMap: Map<number, AudioSession> = new Map();
-
-
     public static getMasterVolume(): number {
-        return NodeAudioVolumeMixer.getMasterVolumeLevelScalar();
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        return masterDevice.volume;
     }
 
     public static setMasterVolume(volume: number): void {
@@ -30,221 +20,128 @@ export class SessionController {
             throw new Error("Volume must be between 0 and 1. Input: " + volume);
         }
 
-        NodeAudioVolumeMixer.setMasterVolumeLevelScalar(volume);
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        masterDevice.volume = volume;
     }
 
     public static isMasterMuted(): boolean {
-        return NodeAudioVolumeMixer.isMasterMuted();
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        return masterDevice.mute;
     }
 
     public static setMasterMute(isMasterMuted: boolean): void {
-        NodeAudioVolumeMixer.muteMaster(isMasterMuted);
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        masterDevice.mute = isMasterMuted;
     }
 
 
-    public static async getSessions(): Promise<Session[]> {
-
-        // const sessions: any[] = NodeAudioVolumeMixer.getAudioSessionProcesses();
-
-        // const updatedSessions: Session[] = [];
-        // sessions.forEach((session) => {
-        //     if (session.pid === 0) {
-        //         session.name = "System Volume"
-        //         session.name = "System Volume";
-        //     }
-
-        //     if (!this.isValidUnicode(session.name)) {
-        //         exec(`wmic process get Name | find "${session.pid}"`, (err, stdout, stderr) => {
-        //             console.log(stdout)
-        //         });
-        //     }
-
-        //     updatedSessions.push({ ...session, volume: this.getSessionVolume(session.pid), isMuted: this.isSessionMuted(session.pid) })
-        // });
-        // return updatedSessions;
-
-
-
+    public static getSessions(): Session[] {
         const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
         const sessions: AudioSession[] = masterDevice.sessions;
 
         const sessionList: Session[] = [];
 
-        await Promise.all(sessions.map(async (session: AudioSession) => {
-            const path = session.appName;
-            const sessionName: string | null = await this.nameFromPath(path);
-            let isSystemVol = false;
-            if (!path) {
-                isSystemVol = true;
-            }
+        sessions.forEach((session: AudioSession) => {
 
-            if (sessionName === null) {
-                console.log("Error getting name for " + session);
-                return;
-            }
-
-            const pid: number = isSystemVol ? 0 : this.generatePIDFromPath(path);
-            const sessionInMap: AudioSession = this.pidToSessionMap.get(pid);
-            if (sessionInMap === undefined) {
-                this.pidToSessionMap.set(pid, session);
-            } else {
-                if (sessionInMap.appName !== path) {
-                    const errorMessage = `Duplicate PIDs found for ${path} and ${sessionInMap.appName}`;
-                    throw new Error(errorMessage);
-                }
-            }
-
+            const sessionName: string = session.name === '' ? "System Volume" : this.parsePathToApplicationName(session.appName)
+            const pid: number = this.parsePID(session.id);
             const sessionObject: Session = {
                 pid: pid,
                 name: sessionName,
-                volume: isSystemVol ? NodeAudioVolumeMixer.getAudioSessionVolumeLevelScalar(0) : session.volume,
-                isMuted: isSystemVol ? NodeAudioVolumeMixer.isAudioSessionMuted(0) : session.mute
+                volume: session.volume,
+                isMuted: session.mute
             }
 
             sessionList.push(sessionObject);
-        }));
+        })
 
         return sessionList;
-
-    }
-
-    private static generatePIDFromPath(path: string): number {
-        const hash: crypto.Hash = crypto.createHash('sha256');
-        hash.update(path);
-        const hashHex: string = hash.digest('hex');
-        const uid: number = parseInt(hashHex.substring(0, 10), 16); // Truncate PID to 10
-        return uid;
     }
 
 
+    private static REGEX = /\\[\w\.]+$/g
+
+    private static parsePathToApplicationName(path: string): string {
+        const name = path.match(this.REGEX).pop().substring(1).split(".")[0]
+        return name;
+    }
+
+    private static parsePID(id: string): number {
+        const pid: string = id.split("%")[2].replace(/\D/g, '');
+
+        return !pid ? 0 : Number(pid);
+    }
+
+
+
+    private static getSessionByPID(pid: number): AudioSession {
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+
+        const sessions: AudioSession[] = masterDevice.sessions;
+        for (let i = 0; i < sessions.length; i++) {
+            if (this.parsePID(sessions[i].id) === pid) {
+                return sessions[i];
+            }
+        }
+
+        throw new Error("Could not find session with PID: " + pid);
+
+    }
 
     public static setSessionVolume(pid: number, volume: number): void {
         if (volume > 1 || volume < 0) {
             throw new Error("Volume must be between 0 and 1. Input: " + volume);
         }
 
-        const session: AudioSession = this.pidToSessionMap.get(pid);
-        if (session === undefined) {
-            throw new Error("Could not find session with PID: " + pid);
-        }
 
-        // Set session volume
-        session.volume = volume;
+        this.getSessionByPID(pid).volume = volume;
+
 
     }
 
     public static getSessionVolume(pid: number): number {
-        const session: AudioSession = this.pidToSessionMap.get(pid);
-        if (session === undefined) {
-            throw new Error("Could not find session with PID: " + pid);
-        }
-        return session.volume;
+        return this.getSessionByPID(pid).volume;
     }
 
 
     public static setSessionMute(pid: number, isSessionMuted: boolean): void {
-        if (pid === 0) {
-            NodeAudioVolumeMixer.setAudioSessionMute(0, isSessionMuted)
-        }
-
-        const session: AudioSession = this.pidToSessionMap.get(pid);
-        if (session === undefined) {
-            throw new Error("Could not find session with PID: " + pid);
-        }
-        session.mute = isSessionMuted;
+        this.getSessionByPID(pid).mute = isSessionMuted;
     }
 
     public static isSessionMuted(pid: number): boolean {
-        const session: AudioSession = this.pidToSessionMap.get(pid);
-        if (session === undefined) {
-            throw new Error("Could not find session with PID: " + pid);
-        }
-        return session.mute;
+        return this.getSessionByPID(pid).mute;
     }
+
 
     public static toggleSolo(pid: number): void {
         let allMuted = true;
 
-        this.pidToSessionMap.forEach((_, sessionPID: number) => {
-            if (sessionPID !== pid && !SessionController.isSessionMuted(sessionPID)) {
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+        const sessions: AudioSession[] = masterDevice.sessions;
+
+        sessions.forEach(session => {
+            const sessionPID: number = this.parsePID(session.id);
+            if (sessionPID !== pid && !this.isSessionMuted(sessionPID)) {
                 allMuted = false;
             }
-        });
+        })
 
         if (allMuted) {
             if (!SessionController.isSessionMuted(pid)) { // Solo already applied, remove it
-                this.pidToSessionMap.forEach((_, sessionPID: number) => {
-                    SessionController.setSessionMute(sessionPID, false);
+                sessions.forEach(sessions => {
+                    SessionController.setSessionMute(this.parsePID(sessions.id), false);
                 });
             } else { // Everything including the solo session is muted. Unmute solo
                 SessionController.setSessionMute(pid, false);
             }
         } else { // Apply solo
-            this.pidToSessionMap.forEach((_, sessionPID: number) => {
+            sessions.forEach(sessions => {
+                const sessionPID = this.parsePID(sessions.id);
                 SessionController.setSessionMute(sessionPID, sessionPID !== pid);
             });
-
-
         }
         console.log("Toggling mute for session: " + pid);
     }
-
-
-
-    private static REGEX = /[^\u0000-\u00ff]/; // Small performance gain from pre-compiling the regex
-    private static isValidUnicode(str: string) {
-        if (!str.length || str.charCodeAt(0) > 255) {
-            return false;
-        }
-        return !this.REGEX.test(str);
-    }
-
-    private static async getProcessName(pid: number): Promise<string | null> {
-        let error: any;
-        try {
-            const { stdout, stderr } = await exec(`wmic process get Name | find "${pid}"`);
-            if (stdout) {
-                return stdout.trim().split(" ").filter(i => i)[1];
-            }
-            error = stderr;
-
-        } catch (e) {
-            error = e;
-        }
-
-        console.error(error);
-        return null;
-    }
-
-
-    private static async nameFromPath(path: string): Promise<string | null> {
-        let error: any;
-
-        try {
-            const command: string = `(Get-Item "${path}").VersionInfo.FileDescription`
-            const { stdout, stderr } = await exec(command, { 'shell': 'powershell.exe' });
-            if (stdout) {
-                return stdout.trim();
-            }
-            error = stderr;
-        } catch (e) {
-            if (!path) {
-                return "System Volume";
-            }
-            error = e;
-        }
-        if (!path) {
-            return "System Volume";
-        }
-
-        console.error(error);
-
-
-        return null;
-    }
-
-
-
 
 
 }

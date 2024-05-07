@@ -1,0 +1,13 @@
+1. Prevent master slider from changing if user clicks in element range but not on slider
+    - Sandwich slider with two divs
+
+2. Add a "lock" button to each session to prevent the session from being muted.
+    - Use case: when the user solo's and unsolos, all tracks, even if they were previously muted,
+        become unmuted
+
+3. Sorting options (PID, name, etc.)
+4. Process alias
+    - Store conversion, and when process name equals key, change name to the converted
+        ex. R5apex -> Apex Legends
+        
+

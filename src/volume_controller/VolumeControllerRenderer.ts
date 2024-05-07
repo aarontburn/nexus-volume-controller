@@ -42,7 +42,6 @@ interface Session {
                 break;
             }
             case "vol-sessions": {
-                console.log(data[0])
                 refreshSessions(data[0]);
                 break;
             }
@@ -127,7 +126,6 @@ interface Session {
 
             let sessionBoxHTML: HTMLElement = sessionHTMLMap.get(session.pid);
             if (sessionBoxHTML === undefined) { // Session not in map
-                sessionObjMap.set(session.pid, session);
 
                 sessionBoxHTML = document.createElement('div');
                 sessionBoxHTML.id = `session-${session.pid}`;
@@ -170,16 +168,17 @@ interface Session {
                 soloButton.addEventListener("click", () => {
                     sendToProcess('session-solo', session.pid);
                     toggleSolo(session.pid);
-
-
                 });
 
                 document.getElementById("session-box-container").appendChild(sessionBoxHTML);
+
+                sessionObjMap.set(session.pid, session);
                 sessionHTMLMap.set(session.pid, sessionBoxHTML);
             } else { // Updating existing element with new values
                 setMuteButton(session.pid, sessionBoxHTML.querySelector(".session-mute"), session.isMuted);
                 sessionBoxHTML.querySelector(".session-name").textContent = formattedName;
                 sessionBoxHTML.querySelector(".session-volume").textContent = `${roundedVolume}%`;
+                sessionObjMap.set(session.pid, session);
             }
         }
         sessionHTMLMap.forEach((htmlElement, pid) => { // Removes applications that aren't used
@@ -189,6 +188,7 @@ interface Session {
                 sessionObjMap.delete(pid);
             }
         });
+
     }
 
     /*
@@ -203,69 +203,34 @@ interface Session {
     */
 
     function toggleSolo(soloedSessionPID: number): void {
-        if (sessionObjMap.get(soloedSessionPID).isMuted === true) { // soloed track is muted. unmute it an mute others
+        if (sessionHTMLMap.get(soloedSessionPID).classList.contains('muted-session-box')) { // soloed track is muted. unmute it and mute others
             sessionHTMLMap.forEach((html, pid) => {
-                if (pid === soloedSessionPID) {
-                    setMuteButton(pid, html.querySelector(".session-mute"), false);
-                } else {
-                    setMuteButton(pid, html.querySelector(".session-mute"), true);
-
-                }
+                setMuteButton(pid, html.querySelector(".session-mute"), pid !== soloedSessionPID);
             });
             return;
         }
 
-
-
         let allMuted = true;
-        sessionObjMap.forEach((session, pid) => {
-            if (pid === soloedSessionPID) {
-                return;
-            }
-
-            if (session.isMuted === false) {
+        sessionHTMLMap.forEach((sessionHTML, pid) => {
+            if (pid !== soloedSessionPID && !sessionHTML.classList.contains('muted-session-box')) {
                 allMuted = false;
             }
         });
 
-        if (allMuted) {
-            console.log("removing solo");
-
+        if (allMuted) { // everything is muted BUT the soloed track, unmute everything
             sessionHTMLMap.forEach((html, pid) => {
                 setMuteButton(pid, html.querySelector(".session-mute"), false);
             });
         } else {
-            console.log("applying solo");
             sessionHTMLMap.forEach((html, pid) => {
-                if (pid === soloedSessionPID) {
-                    setMuteButton(pid, html.querySelector(".session-mute"), false);
-                } else {
-                    setMuteButton(pid, html.querySelector(".session-mute"), true);
-
-                }
+                setMuteButton(pid, html.querySelector(".session-mute"), pid !== soloedSessionPID);
             });
         }
 
-
-
-        // if (allMuted) { // All tracks are already muted
-        //     if (!sessionObjMap.get(soloedSessionPID).isMuted) { // Solo already applied, remove it
-        //         console.log("Removing solo");
-
-        //     } else { // Solo not applied since session is muted, unmute session
-        //         setMuteButton(soloedSessionPID, sessionHTMLMap.get(soloedSessionPID).querySelector(".session-mute"), false);
-        //     }
-        // } else { // Apply solo
-        //     console.log("applying solo");
-
-        // }
     }
 
 
     function setMuteButton(sessionPID: number, muteButton: HTMLElement, isMuted: boolean): void {
-        if (sessionPID === 247455286303) {
-            console.log(isMuted)
-        }
         const sessionMuteActive: string = 'session-mute-active';
         const sessionMuted: string = 'session-muted';
 
