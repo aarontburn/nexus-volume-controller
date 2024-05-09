@@ -10,4 +10,6 @@
     - Store conversion, and when process name equals key, change name to the converted
         ex. R5apex -> Apex Legends
         
-
+5. Presets
+    - Save Presets
+    - Manage Presets (delete)

@@ -178,6 +178,7 @@ interface Session {
                 setMuteButton(session.pid, sessionBoxHTML.querySelector(".session-mute"), session.isMuted);
                 sessionBoxHTML.querySelector(".session-name").textContent = formattedName;
                 sessionBoxHTML.querySelector(".session-volume").textContent = `${roundedVolume}%`;
+                (sessionBoxHTML.querySelector(".vol-slider") as HTMLInputElement).value = String(roundedVolume);
                 sessionObjMap.set(session.pid, session);
             }
         }

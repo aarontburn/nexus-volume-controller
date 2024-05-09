@@ -43,7 +43,7 @@ export class SessionController {
 
         sessions.forEach((session: AudioSession) => {
 
-            const sessionName: string = session.name === '' ? "System Volume" : this.parsePathToApplicationName(session.appName)
+            const sessionName: string = session.name === '' ? "System Volume" : this.parsePathToApplicationName(session.appName);
             const pid: number = this.parsePID(session.id);
             const sessionObject: Session = {
                 pid: pid,
