@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('ipc', {
    * The target should be in the form: "<target_name>-process".
    * e.x. to target the main process, it should be "main-process"
    */
-  send: (target: string, eventType: string, ...data: any): void =>
+  send: (target: string, eventType: string, ...data: any[]): void =>
     ipcRenderer.send(target, eventType, data),
 
   /**

@@ -62,7 +62,7 @@ export class SessionController {
     private static REGEX = /\\[\w\.]+$/g
 
     private static parsePathToApplicationName(path: string): string {
-        const name = path.match(this.REGEX).pop().substring(1).split(".")[0]
+        const name = path.match(this.REGEX).pop().substring(1).split(".")[0];
         return name;
     }
 

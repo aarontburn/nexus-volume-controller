@@ -3,7 +3,7 @@
     const MODULE_PROCESS_NAME = MODULE_NAME.toLowerCase() + "-process";
     const MODULE_RENDERER_NAME = MODULE_NAME.toLowerCase() + "-renderer"
 
-    const sendToProcess = (eventType: string, ...data: any): void => {
+    const sendToProcess = (eventType: string, ...data: any[]): void => {
         window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);
     }
 
