@@ -11,7 +11,6 @@ let selectedTab: HTMLElement = undefined;
 window.ipc.send(window.constants.MAIN, "renderer-init"); // let main know that renderer is booted
 
 window.ipc.on("main-renderer", (_, eventType: string, data: any) => {
-    data = data[0];
     switch (eventType) {
         case "load-modules": {
             const moduleHtml: HTMLElement = document.getElementById("modules");

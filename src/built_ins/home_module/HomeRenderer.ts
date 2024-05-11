@@ -15,8 +15,7 @@
     const standardTime: HTMLElement = document.getElementById("standard-time");
     const militaryTime: HTMLElement = document.getElementById("military-time");
     
-    window.parent.ipc.on(MODULE_RENDERER_NAME, (_, eventType: string, data: any[]) => {
-        data = data[0]; // Data is wrapped in an extra array.
+    window.parent.ipc.on(MODULE_RENDERER_NAME, (_, eventType: string, ...data: any[]) => {
         switch(eventType) {
             case "update-clock": {
                 fullDate.innerHTML = data[0];

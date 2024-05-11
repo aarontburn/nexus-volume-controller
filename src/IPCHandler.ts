@@ -7,8 +7,7 @@ export class IPCHandler {
     private static ipc: Electron.IpcMain;
     private static window: BrowserWindow;
 
-    constructor() {
-        console.log("Constructor called")
+    private constructor() {
     }
 
     public static construct(theWindow: BrowserWindow, theIpc: Electron.IpcMain) {
@@ -25,14 +24,14 @@ export class IPCHandler {
     public static fireEventToRenderer(target: IPCSource, eventType: string, ...data: any[]): void {
         IPCHandler.checkInit()
         try {
-            this.window.webContents.send(target.getIPCSource() + "-renderer", eventType, data);
+            this.window.webContents.send(target.getIPCSource() + "-renderer", eventType, ...data);
         } catch (err) {
         }
     }
 
     public static fireEventToProcess(target: IPCSource, eventType: string, ...data: any[]): void {
         this.checkInit()
-        this.window.webContents.send(target.getIPCSource() + "-process", eventType, data);
+        this.window.webContents.send(target.getIPCSource() + "-process", eventType, ...data);
     }
 
     public static createHandler(

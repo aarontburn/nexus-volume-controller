@@ -14,8 +14,7 @@
     const moduleList: HTMLElement = document.getElementById("left");
     const settingsList: HTMLElement = document.getElementById("right");
 
-    window.parent.ipc.on(MODULE_RENDERER_NAME, (_, eventType: string, data: any[]) => {
-        data = data[0]; // Data is wrapped in an extra array.
+    window.parent.ipc.on(MODULE_RENDERER_NAME, (_, eventType: string, ...data: any[]) => {
         switch (eventType) {
             case "populate-settings-list": {
                 populateSettings(data[0]);

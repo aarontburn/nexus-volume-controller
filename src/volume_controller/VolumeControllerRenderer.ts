@@ -34,8 +34,7 @@ interface Session {
 
 
 
-    window.parent.ipc.on(MODULE_RENDERER_NAME, async (_, eventType: string, data: any[]) => {
-        data = data[0]; // Data is wrapped in an extra array.
+    window.parent.ipc.on(MODULE_RENDERER_NAME, async (_, eventType: string, ...data: any[]) => {
         switch (eventType) {
             case 'master-update': {
                 updateMaster(data[0]);
