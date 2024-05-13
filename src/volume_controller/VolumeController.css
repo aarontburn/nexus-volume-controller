@@ -43,7 +43,9 @@
 }
 
 /* ------- */
-.vol-slider {}
+.vol-slider {
+    accent-color:var(--accent-color)
+}
 
 
 
