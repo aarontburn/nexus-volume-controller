@@ -44,6 +44,11 @@ export class SessionController {
         sessions.forEach((session: AudioSession) => {
 
             const sessionName: string = session.name === '' ? "System Volume" : this.parsePathToApplicationName(session.appName);
+            if (sessionName === undefined) {
+                return;
+            }
+
+
             const pid: number = this.parsePID(session.id);
             const sessionObject: Session = {
                 pid: pid,
@@ -59,10 +64,10 @@ export class SessionController {
     }
 
 
-    private static REGEX = /\\[\w\.]+$/g
+    private static readonly REGEX = /\\[\w\.]+$/g
 
-    private static parsePathToApplicationName(path: string): string {
-        const name = path.match(this.REGEX).pop().substring(1).split(".")[0];
+    private static parsePathToApplicationName(path: string): string | null {
+        const name = path.match(this.REGEX)?.pop().substring(1).split(".")[0];
         return name;
     }
 
@@ -93,16 +98,12 @@ export class SessionController {
             throw new Error("Volume must be between 0 and 1. Input: " + volume);
         }
 
-
         this.getSessionByPID(pid).volume = volume;
-
-
     }
 
     public static getSessionVolume(pid: number): number {
         return this.getSessionByPID(pid).volume;
     }
-
 
     public static setSessionMute(pid: number, isSessionMuted: boolean): void {
         this.getSessionByPID(pid).mute = isSessionMuted;
@@ -111,7 +112,6 @@ export class SessionController {
     public static isSessionMuted(pid: number): boolean {
         return this.getSessionByPID(pid).mute;
     }
-
 
     public static toggleSolo(pid: number): void {
         let allMuted = true;
