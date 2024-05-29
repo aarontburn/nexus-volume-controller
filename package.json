@@ -7,7 +7,7 @@
     "watch": "tsc -w",
     "lint": "eslint -c .eslintrc --ext .ts ./src",
     "start": "npm run build && electron ./dist/main.js",
-    "export": "python node_modules/modules-export-script/EXPORT.py"
+    "export": "node node_modules/modules-export-script/export.js"
   },
   "author": "aarontburn",
   "devDependencies": {
