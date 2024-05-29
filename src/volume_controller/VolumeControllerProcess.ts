@@ -91,13 +91,13 @@ export class VolumeControllerProcess extends Process {
                 break;
             }
             case "session-muted": {
-                const sessionPID: number = Number(data);
+                const sessionPID: number = Number(data[0]);
                 SessionController.setSessionMute(sessionPID, !SessionController.isSessionMuted(sessionPID));
                 console.log("Toggling mute for session: " + sessionPID);
                 break;
             }
             case "session-solo": {
-                const sessionPID: number = Number(data);
+                const sessionPID: number = Number(data[0]);
                 SessionController.toggleSolo(sessionPID);
                 break;
             }
@@ -114,6 +114,10 @@ export class VolumeControllerProcess extends Process {
             case "mute-unfocused": {
                 SessionController.toggleUnfocusedSession(Number(data[0]));
                 this.writeBackgroundMuteToStorage();
+                break;
+            }
+            case "session-lock": {
+                SessionController.setSessionLock(Number(data[0]));
                 break;
             }
         }

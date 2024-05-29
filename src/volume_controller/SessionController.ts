@@ -7,12 +7,23 @@ export interface Session {
     name: string,
     volume: number,
     isMuted: boolean,
-    backgroundMute: boolean
+    backgroundMute: boolean,
+    isLocked: boolean
 }
 
 export class SessionController {
 
     private static bgMuteSessions: Set<string> = new Set();
+    private static lockedSessions: Map<number, boolean> = new Map();
+
+    static {
+        console.log("Attaching window listener");
+
+        windowManager.on("window-activated", (window: Window) => {
+            this.windowChanged(window);
+        });
+
+    }
 
     public static init(bgMute: Set<string>): void {
         this.bgMuteSessions = bgMute;
@@ -63,7 +74,8 @@ export class SessionController {
                 name: sessionName,
                 volume: session.volume,
                 isMuted: session.mute,
-                backgroundMute: this.bgMuteSessions.has(session.appName)
+                backgroundMute: this.bgMuteSessions.has(session.appName),
+                isLocked: this.lockedSessions.has(pid)
             }
 
             sessionList.push(sessionObject);
@@ -180,14 +192,7 @@ export class SessionController {
     }
 
 
-    static {
-        console.log("Attaching window listener");
 
-        windowManager.on("window-activated", (window: Window) => {
-            this.windowChanged(window);
-        });
-
-    }
 
     private static windowChanged(currentWindow: Window): void {
 
@@ -202,9 +207,22 @@ export class SessionController {
 
     }
 
+
     public static getBGMutePaths(): Set<string> {
-        return this.bgMuteSessions;
+        return new Set(this.bgMuteSessions);
     }
+
+
+    public static setSessionLock(pid: number): void {
+        if (this.lockedSessions.has(pid)) {
+            this.lockedSessions.delete(pid);
+        } else {
+            const isCurrentlyMuted: boolean = this.getSessionByPID(pid).mute
+            this.lockedSessions.set(pid, isCurrentlyMuted);
+        }
+    }
+
+
 
 
 

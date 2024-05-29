@@ -7,7 +7,8 @@ interface Session {
     name: string,
     volume: number,
     isMuted: boolean,
-    backgroundMute: boolean
+    backgroundMute: boolean,
+    isLocked: boolean
 }
 
 (() => { // Wrapped in an anonymous function for scoping.
@@ -32,12 +33,6 @@ interface Session {
     const CONTROL_ACTIVE_CSS: string = 'session-option-active';
 
 
-    const sessionHTMLMap: Map<number, HTMLElement> = new Map();
-    const sessionObjMap: Map<number, Session> = new Map();
-    let isPIDVisible: boolean = false;
-
-
-
     window.parent.ipc.on(MODULE_RENDERER_NAME, async (_, eventType: string, ...data: any[]) => {
         switch (eventType) {
             case 'master-update': {
@@ -45,15 +40,12 @@ interface Session {
                 break;
             }
             case "vol-sessions": {
-                refreshSessions(data[0]);
+                SessionBox.updateSessions(data[0]);
+                // refreshSessions(data[0]);
                 break;
             }
             case "session-pid-visibility-modified": {
-                isPIDVisible = data[0];
-                sessionHTMLMap.forEach((html, pid) => {
-                    const session: Session = sessionObjMap.get(pid);
-                    html.querySelector(".session-name").textContent = formatSessionName(session.name, session.pid);
-                });
+                SessionBox.setPIDVisibility(data[0]);
                 break;
             }
         }
@@ -117,217 +109,34 @@ interface Session {
 
 
 
-    function refreshSessions(data: any[]): void {
-        const sessionArray: Session[] = data;
-        const pidArray: number[] = []
-        for (const session of sessionArray) {
-            pidArray.push(session.pid);
-
-            const roundedVolume: number = Math.round(session.volume * 100);
-            const formattedName: string = formatSessionName(session.name, session.pid);
-
-
-            let sessionBoxHTML: HTMLElement = sessionHTMLMap.get(session.pid);
-            if (sessionBoxHTML === undefined) { // Session not in map
-
-                sessionBoxHTML = document.createElement('div');
-                sessionBoxHTML.id = `session-${session.pid}`;
-                sessionBoxHTML.className = 'session-box';
-                sessionBoxHTML.innerHTML = `
-                    <p class='session-name gray-scalable'>${formattedName}</p>
-
-                    <div style='margin-right: auto'></div>
-
-                    <div style='display: flex; width: 50%'>
-                        <div class='session-controls'>
-                            <input class='vol-slider gray-scalable' type="range" min="0" max="100" value='${roundedVolume}'>
-
-                            <div class='session-mute-solo-group'>
-                                <p class='session-mute'>M</p>
-                                <p class='session-solo'>S</p>
-                                <p class='background-mute'>BM</p>
-                                <p class='session-lock'>L</p>
-                            </div>
-                        </div>
-
-                        <p class='session-volume gray-scalable'>${roundedVolume}%</p>
-                    </div>
-                `;
-
-                const slider: HTMLInputElement = sessionBoxHTML.querySelector('.vol-slider') as HTMLInputElement;
-                slider.addEventListener("input", (event: Event) => {
-                    const sliderValue: number = Number((event.target as HTMLInputElement).value);
-                    sessionBoxHTML.querySelector(".session-volume").textContent = `${sliderValue.toString()}%`;
-                    sendToProcess("volume-modified", session.pid, sliderValue);
-                });
-
-                const muteButton: HTMLElement = sessionBoxHTML.querySelector('.session-mute');
-                setMuteButton(session.pid, muteButton, session.isMuted);
-                muteButton.addEventListener("click", () => {
-                    sendToProcess('session-muted', session.pid);
-                    setMuteButton(session.pid, muteButton);
-                });
-
-                const soloButton: HTMLElement = sessionBoxHTML.querySelector('.session-solo');
-                soloButton.addEventListener("click", () => {
-                    sendToProcess('session-solo', session.pid);
-                    toggleSolo(session.pid);
-                });
-
-
-                const backgroundMuteButton: HTMLElement = sessionBoxHTML.querySelector('.background-mute');
-                setBackgroundMute(backgroundMuteButton, session.backgroundMute);
-                backgroundMuteButton.addEventListener("click", () => {
-                    setBackgroundMute(backgroundMuteButton);
-                    sendToProcess('mute-unfocused', session.pid);
-                });
-
-
-                document.getElementById("session-box-container").appendChild(sessionBoxHTML);
-
-                sessionObjMap.set(session.pid, session);
-                sessionHTMLMap.set(session.pid, sessionBoxHTML);
-            } else { // Updating existing element with new values
-                setMuteButton(session.pid, sessionBoxHTML.querySelector(".session-mute"), session.isMuted);
-                setBackgroundMute(sessionBoxHTML.querySelector(".background-mute"), session.backgroundMute)
-                sessionBoxHTML.querySelector(".session-name").textContent = formattedName;
-                sessionBoxHTML.querySelector(".session-volume").textContent = `${roundedVolume}%`;
-                (sessionBoxHTML.querySelector(".vol-slider") as HTMLInputElement).value = String(roundedVolume);
-                sessionObjMap.set(session.pid, session);
-            }
-        }
-        sessionHTMLMap.forEach((htmlElement, pid) => { // Removes applications that aren't used
-            if (!pidArray.includes(pid)) {
-                htmlElement.remove();
-                sessionHTMLMap.delete(pid);
-                sessionObjMap.delete(pid);
-            }
-        });
-    }
-
-
-    function setBackgroundMute(htmlElement: HTMLElement, isBackgroundMuted?: boolean): void {
-        if (isBackgroundMuted === undefined) {
-            htmlElement.classList.toggle(CONTROL_ACTIVE_CSS);
-            return
-        }
-
-
-        if (isBackgroundMuted) {
-            htmlElement.classList.add(CONTROL_ACTIVE_CSS);
-            
-        } else {
-            htmlElement.classList.remove(CONTROL_ACTIVE_CSS)
-        }
-
-
-
-    }
-
-    /*
-        If session is muted, unmute it and mute all others
-
-        If session is unmuted
-            Check if all the other sessions are muted
-                If all other sessions are muted,
-                    Unmute all sessions
-                If not all other sessions are muted,
-                    mute all sessions
-    */
-
-    function toggleSolo(soloedSessionPID: number): void {
-        if (sessionHTMLMap.get(soloedSessionPID).classList.contains('muted-session-box')) { // soloed track is muted. unmute it and mute others
-            sessionHTMLMap.forEach((html, pid) => {
-                setMuteButton(pid, html.querySelector(".session-mute"), pid !== soloedSessionPID);
-            });
-            return;
-        }
-
-        let allMuted = true;
-        sessionHTMLMap.forEach((sessionHTML, pid) => {
-            if (pid !== soloedSessionPID && !sessionHTML.classList.contains('muted-session-box')) {
-                allMuted = false;
-            }
-        });
-
-        if (allMuted) { // everything is muted BUT the soloed track, unmute everything
-            sessionHTMLMap.forEach((html, pid) => {
-                setMuteButton(pid, html.querySelector(".session-mute"), false);
-            });
-        } else {
-            sessionHTMLMap.forEach((html, pid) => {
-                setMuteButton(pid, html.querySelector(".session-mute"), pid !== soloedSessionPID);
-            });
-        }
-
-    }
-
-
-    function setMuteButton(sessionPID: number, muteButton: HTMLElement, isMuted?: boolean): void {
-        if (isMuted === undefined) {
-            isMuted = !muteButton.classList.contains(CONTROL_ACTIVE_CSS);
-        }
-
-
-        const sessionMuteActive: string = CONTROL_ACTIVE_CSS;
-        const sessionMuted: string = 'session-muted';
-
-        const sessionBox: Element = document.getElementById(`session-${sessionPID}`);
-        const grayScalableElements: NodeListOf<Element> = document.querySelectorAll(`#session-${sessionPID} .gray-scalable`);
-
-        if (isMuted) {
-            muteButton.classList.add(sessionMuteActive);
-            sessionBox?.classList.add('muted-session-box');
-
-            // Make specific elements grayed
-            for (let i = 0; i < grayScalableElements.length; i++) {
-                const element = grayScalableElements.item(i);
-                element.classList.add(sessionMuted);
-            }
-
-            return;
-        }
-
-        muteButton.classList.remove(sessionMuteActive);
-        sessionBox?.classList.remove('muted-session-box');
-
-
-        for (let i = 0; i < grayScalableElements.length; i++) {
-            const element = grayScalableElements.item(i);
-            element.classList.remove(sessionMuted);
-        }
-
-
-    }
-
-
-    function formatSessionName(name: string, pid: number): string {
-        return name.charAt(0).toUpperCase()
-            + name.substring(1).toLowerCase().replace(".exe", "")
-            + (isPIDVisible ? ` (${pid})` : "");
-    }
 
 
     dragElement(document.getElementById("separator"));
 
     function dragElement(element: HTMLElement): void {
-        let md: any;
+        let md: {
+            event: MouseEvent,
+            offsetLeft: number,
+            offsetTop: number,
+            firstWidth: number,
+            secondWidth: number
+        };
         const left: HTMLElement = document.getElementById("left");
         const right: HTMLElement = document.getElementById("right");
 
         element.onmousedown = (e: MouseEvent) => {
             md = {
-                e,
+                event: e,
                 offsetLeft: element.offsetLeft,
                 offsetTop: element.offsetTop,
                 firstWidth: left.offsetWidth,
                 secondWidth: right.offsetWidth
             };
 
-            document.onmousemove = (e: MouseEvent): void => {
+            document.onmousemove = (e: MouseEvent) => {
                 let delta: { x: number, y: number } = {
-                    x: e.clientX - md.e.clientX,
-                    y: e.clientY - md.e.clientY
+                    x: e.clientX - md.event.clientX,
+                    y: e.clientY - md.event.clientY
                 };
 
                 delta.x = Math.min(Math.max(delta.x, -md.firstWidth), md.secondWidth);
@@ -336,9 +145,8 @@ interface Session {
                 left.style.width = (md.firstWidth + delta.x) + "px";
                 right.style.width = (md.secondWidth - delta.x) + "px";
             };
-            document.onmouseup = () => {
-                document.onmousemove = document.onmouseup = null;
-            }
+            document.onmouseup = () => document.onmousemove = document.onmouseup = null;
+
         };
     }
 
@@ -347,9 +155,262 @@ interface Session {
 
 
 
+
+
+
+
+    class SessionBox {
+
+        private static readonly sessionBoxMap: Map<number, SessionBox> = new Map();
+        private static isPIDVisible: boolean = false;
+
+
+        public static setPIDVisibility(isPIDVisible: boolean): void {
+            this.isPIDVisible = isPIDVisible;
+
+            this.sessionBoxMap.forEach((sessionBox, _) => {
+                sessionBox.updateName()
+            })
+
+        }
+
+        public static updateSessions(sessions: Session[]): void {
+            const sessionBoxContainer: HTMLElement = document.getElementById("session-box-container");
+            const pidArray: number[] = [];
+
+            for (const session of sessions) {
+                pidArray.push(session.pid);
+
+                let sessionBox: SessionBox = this.sessionBoxMap.get(session.pid);
+                if (sessionBox === undefined) {
+                    sessionBox = new SessionBox(session);
+                    this.sessionBoxMap.set(session.pid, sessionBox);
+                    sessionBoxContainer.appendChild(sessionBox.getHTML());
+                } else {
+                    sessionBox.update(session);
+                }
+            }
+
+            this.sessionBoxMap.forEach((sessionBox, pid) => { // Removes applications that aren't used
+                if (!pidArray.includes(pid)) {
+                    sessionBox.getHTML().remove();
+                    this.sessionBoxMap.delete(pid);
+                }
+            });
+        }
+
+
+        private readonly session: Session;
+
+        private nameLabel: HTMLElement;
+        private volumeLabel: HTMLElement;
+
+        private muteButton: HTMLElement;
+        private soloButton: HTMLElement;
+        private bgMuteButton: HTMLElement;
+        private lockButton: HTMLElement;
+        private volSlider: HTMLInputElement;
+
+        private parentDiv: HTMLDivElement;
+
+        constructor(session: Session) {
+            this.session = session;
+
+            const roundedVolume: number = Math.round(session.volume * 100);
+            const formattedName: string = this.getFormattedName();
+
+            this.parentDiv = document.createElement('div');
+            this.parentDiv.id = `session-${session.pid}`;
+            this.parentDiv.className = 'session-box';
+            this.parentDiv.innerHTML = `
+                <p class='session-name gray-scalable'>${formattedName}</p>
+
+                <div style='margin-right: auto'></div>
+
+                <div style='display: flex; width: 50%'>
+                    <div class='session-controls'>
+                        <input class='vol-slider gray-scalable' type="range" min="0" max="100" value='${roundedVolume}'>
+
+                        <div class='session-mute-solo-group'>
+                            <p class='session-mute'>M</p>
+                            <p class='session-solo'>S</p>
+                            <p class='background-mute'>BM</p>
+                            <p class='session-lock'>L</p>
+                        </div>
+                    </div>
+
+                    <p class='session-volume gray-scalable'>${roundedVolume}%</p>
+                </div>
+            `;
+
+
+            this.nameLabel = this.parentDiv.querySelector(".session-name");
+            this.volumeLabel = this.parentDiv.querySelector(".session-volume");
+
+            this.volSlider = this.parentDiv.querySelector('.vol-slider') as HTMLInputElement;
+            this.lockButton = this.parentDiv.querySelector(".session-lock");
+            this.muteButton = this.parentDiv.querySelector('.session-mute');
+            this.bgMuteButton = this.parentDiv.querySelector('.background-mute');
+            this.soloButton = this.parentDiv.querySelector('.session-solo');
+
+
+
+            this.volSlider.addEventListener("input", (event: Event) => {
+                const sliderValue: number = Number((event.target as HTMLInputElement).value);
+                this.volumeLabel.textContent = `${sliderValue.toString()}%`;
+                sendToProcess("volume-modified", session.pid, sliderValue);
+            });
+
+            this.muteButton.addEventListener("click", () => {
+                this.setMute();
+                sendToProcess('session-muted', session.pid);
+            });
+
+            this.soloButton.addEventListener("click", () => {
+                this.toggleSolo();
+                sendToProcess('session-solo', session.pid);
+            });
+
+
+            this.bgMuteButton.addEventListener("click", () => {
+                this.setBGMute();
+                sendToProcess('mute-unfocused', session.pid);
+            });
+
+            this.lockButton.addEventListener('click', () => {
+                this.setLocked();
+                sendToProcess('session-lock', session.pid);
+            });
+
+            this.update(session);
+
+        }
+
+        public getHTML(): HTMLDivElement {
+            return this.parentDiv;
+        }
+
+
+        public update(session: Session) {
+            if (session.pid !== this.session.pid) {
+                throw new Error(`Mismatched session pid. Expected: ${this.session.pid} | Received: ${session.pid}`);
+            }
+
+            const roundedVolume: number = Math.round(session.volume * 100);
+            const formattedName: string = this.getFormattedName();
+
+
+            this.setMute(session.isMuted);
+            this.setBGMute(session.backgroundMute);
+            this.setLocked(session.isLocked);
+            this.nameLabel.textContent = formattedName;
+            this.volumeLabel.textContent = `${roundedVolume}%`;
+            this.volSlider.value = String(roundedVolume);
+        }
+
+        public updateName(): void {
+            this.nameLabel.textContent = this.getFormattedName()
+        }
+
+
+
+        public toggleSolo() {
+            if (this.parentDiv.classList.contains('muted-session-box')) { // soloed track is muted. unmute it and mute others
+                SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
+                    sessionBox.setMute(pid !== this.session.pid)
+                });
+                return;
+            }
+
+            let allMuted = true;
+            SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
+                if (pid !== this.session.pid && !sessionBox.parentDiv.classList.contains('muted-session-box')) {
+                    allMuted = false;
+                }
+            });
+
+            if (allMuted) { // everything is muted BUT the soloed track, unmute everything
+                SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
+                    sessionBox.setMute(false);
+                });
+            } else {
+                SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
+                    sessionBox.setMute(pid !== this.session.pid);
+                });
+            }
+        }
+
+        public setLocked(isLocked?: boolean) {
+            if (isLocked === undefined) {
+                this.lockButton.classList.toggle(CONTROL_ACTIVE_CSS);
+                return;
+            }
+
+            if (isLocked) {
+                this.lockButton.classList.add(CONTROL_ACTIVE_CSS);
+
+            } else {
+                this.lockButton.classList.remove(CONTROL_ACTIVE_CSS)
+            }
+        }
+
+
+        public setBGMute(isBGMuted?: boolean): void {
+            if (isBGMuted === undefined) {
+                this.bgMuteButton.classList.toggle(CONTROL_ACTIVE_CSS);
+                return;
+            }
+
+            if (isBGMuted) {
+                this.bgMuteButton.classList.add(CONTROL_ACTIVE_CSS);
+            } else {
+                this.bgMuteButton.classList.remove(CONTROL_ACTIVE_CSS)
+            }
+        }
+
+
+        public setMute(isMuted?: boolean): void {
+            if (isMuted === undefined) {
+                isMuted = !this.muteButton.classList.contains(CONTROL_ACTIVE_CSS);
+            }
+
+
+            const sessionMuteActive: string = CONTROL_ACTIVE_CSS;
+            const sessionMuted: string = 'session-muted';
+
+            const grayScalableElements: NodeListOf<Element> = document.querySelectorAll(`#session-${this.session.pid} .gray-scalable`);
+
+            if (isMuted) {
+                this.muteButton.classList.add(sessionMuteActive);
+                this.parentDiv?.classList.add('muted-session-box');
+
+                // Make specific elements grayed
+                for (let i = 0; i < grayScalableElements.length; i++) {
+                    const element = grayScalableElements.item(i);
+                    element.classList.add(sessionMuted);
+                }
+
+                return;
+            }
+
+            this.muteButton.classList.remove(sessionMuteActive);
+            this.parentDiv?.classList.remove('muted-session-box');
+
+
+            for (let i = 0; i < grayScalableElements.length; i++) {
+                const element = grayScalableElements.item(i);
+                element.classList.remove(sessionMuted);
+            }
+        }
+
+
+
+
+        private getFormattedName(): string {
+            return this.session.name.charAt(0).toUpperCase()
+                + this.session.name.substring(1).toLowerCase().replace(".exe", "")
+                + (SessionBox.isPIDVisible ? ` (${this.session.pid})` : "");
+        }
+    }
 })();
-
-
-
-
 
