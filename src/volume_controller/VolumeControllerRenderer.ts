@@ -6,7 +6,8 @@ interface Session {
     pid: number,
     name: string,
     volume: number,
-    isMuted: boolean
+    isMuted: boolean,
+    backgroundMute: boolean
 }
 
 (() => { // Wrapped in an anonymous function for scoping.
@@ -18,7 +19,7 @@ interface Session {
 
     // If this is not shown in the developer console, the renderer wasn't properly initialized.
     // Check the {MODULE_NAME}HTML.html script name.
-    console.log(MODULE_RENDERER_NAME + " initialzed.");
+    console.log(MODULE_RENDERER_NAME + " initialized.");
 
     const sendToProcess = (eventType: string, ...data: any): void => {
         window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);
@@ -27,6 +28,9 @@ interface Session {
 
     // Instruct module process to initialize once the renderer is ready.
     sendToProcess("init");
+
+    const CONTROL_ACTIVE_CSS: string = 'session-option-active';
+
 
     const sessionHTMLMap: Map<number, HTMLElement> = new Map();
     const sessionObjMap: Map<number, Session> = new Map();
@@ -69,7 +73,7 @@ interface Session {
     });
 
     masterMuteButton.addEventListener('click', () => {
-        if (masterMuteButton.classList.contains('session-mute-active')) {
+        if (masterMuteButton.classList.contains(CONTROL_ACTIVE_CSS)) {
             // unmute
             setMasterMute(false);
             sendToProcess('session-mute-state', false);
@@ -88,7 +92,7 @@ interface Session {
             masterSlider.classList.add('session-muted');
             masterVolumeText.classList.add('session-muted');
 
-            masterMuteButton.classList.add('session-mute-active');
+            masterMuteButton.classList.add(CONTROL_ACTIVE_CSS);
             return;
         }
         masterSessionBox.classList.remove('muted-session-box');
@@ -96,7 +100,7 @@ interface Session {
         masterSlider.classList.remove('session-muted');
         masterVolumeText.classList.remove('session-muted');
 
-        masterMuteButton.classList.remove('session-mute-active');
+        masterMuteButton.classList.remove(CONTROL_ACTIVE_CSS);
 
     }
 
@@ -141,6 +145,8 @@ interface Session {
                             <div class='session-mute-solo-group'>
                                 <p class='session-mute'>M</p>
                                 <p class='session-solo'>S</p>
+                                <p class='background-mute'>BM</p>
+                                <p class='session-lock'>L</p>
                             </div>
                         </div>
 
@@ -156,11 +162,10 @@ interface Session {
                 });
 
                 const muteButton: HTMLElement = sessionBoxHTML.querySelector('.session-mute');
-
                 setMuteButton(session.pid, muteButton, session.isMuted);
                 muteButton.addEventListener("click", () => {
                     sendToProcess('session-muted', session.pid);
-                    setMuteButton(session.pid, muteButton, !muteButton.classList.contains("session-mute-active"));
+                    setMuteButton(session.pid, muteButton);
                 });
 
                 const soloButton: HTMLElement = sessionBoxHTML.querySelector('.session-solo');
@@ -169,12 +174,22 @@ interface Session {
                     toggleSolo(session.pid);
                 });
 
+
+                const backgroundMuteButton: HTMLElement = sessionBoxHTML.querySelector('.background-mute');
+                setBackgroundMute(backgroundMuteButton, session.backgroundMute);
+                backgroundMuteButton.addEventListener("click", () => {
+                    setBackgroundMute(backgroundMuteButton);
+                    sendToProcess('mute-unfocused', session.pid);
+                });
+
+
                 document.getElementById("session-box-container").appendChild(sessionBoxHTML);
 
                 sessionObjMap.set(session.pid, session);
                 sessionHTMLMap.set(session.pid, sessionBoxHTML);
             } else { // Updating existing element with new values
                 setMuteButton(session.pid, sessionBoxHTML.querySelector(".session-mute"), session.isMuted);
+                setBackgroundMute(sessionBoxHTML.querySelector(".background-mute"), session.backgroundMute)
                 sessionBoxHTML.querySelector(".session-name").textContent = formattedName;
                 sessionBoxHTML.querySelector(".session-volume").textContent = `${roundedVolume}%`;
                 (sessionBoxHTML.querySelector(".vol-slider") as HTMLInputElement).value = String(roundedVolume);
@@ -188,6 +203,24 @@ interface Session {
                 sessionObjMap.delete(pid);
             }
         });
+    }
+
+
+    function setBackgroundMute(htmlElement: HTMLElement, isBackgroundMuted?: boolean): void {
+        if (isBackgroundMuted === undefined) {
+            htmlElement.classList.toggle(CONTROL_ACTIVE_CSS);
+            return
+        }
+
+
+        if (isBackgroundMuted) {
+            htmlElement.classList.add(CONTROL_ACTIVE_CSS);
+            
+        } else {
+            htmlElement.classList.remove(CONTROL_ACTIVE_CSS)
+        }
+
+
 
     }
 
@@ -230,8 +263,13 @@ interface Session {
     }
 
 
-    function setMuteButton(sessionPID: number, muteButton: HTMLElement, isMuted: boolean): void {
-        const sessionMuteActive: string = 'session-mute-active';
+    function setMuteButton(sessionPID: number, muteButton: HTMLElement, isMuted?: boolean): void {
+        if (isMuted === undefined) {
+            isMuted = !muteButton.classList.contains(CONTROL_ACTIVE_CSS);
+        }
+
+
+        const sessionMuteActive: string = CONTROL_ACTIVE_CSS;
         const sessionMuted: string = 'session-muted';
 
         const sessionBox: Element = document.getElementById(`session-${sessionPID}`);

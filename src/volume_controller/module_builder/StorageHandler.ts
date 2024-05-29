@@ -1,41 +1,22 @@
 import fs from "fs";
 import { app } from 'electron';
-import path from "path"
-import { Process } from "./volume_controller/module_builder/Process";
-import { Setting } from "./volume_controller/module_builder/Setting";
+import { Process } from "./Process";
+import { Setting } from "./Setting";
 
 export class StorageHandler {
     private static PATH: string = app.getPath("home") + "/.modules/";
     private static STORAGE_PATH: string = this.PATH + "/storage/";
 
 
-
-    public static writeToModuleStorage(theModule: Process, theFileName: string, theContents: string): void {
+    public static async writeToModuleStorage(theModule: Process, theFileName: string, theContents: string): Promise<void> {
         const dirName: string = theModule.getModuleName().toLowerCase();
         const folderName: string = this.STORAGE_PATH + dirName + "/";
         const filePath: string = folderName + theFileName;
 
+        await fs.promises.mkdir(folderName, { recursive: true });
+        await fs.promises.writeFile(filePath, theContents);
 
-        const write = async () => {
-            await fs.mkdir(folderName,
-                { recursive: true },
-                (err: NodeJS.ErrnoException) => {
-                    if (err != null) {
-                        console.log("Error creating directories:")
-                        console.log(err)
-                        return;
-                    }
-                    fs.writeFile(`${filePath}`, theContents, (err: NodeJS.ErrnoException) => {
-                        if (err != null) {
-                            console.log("Error writing to module storage:")
-                            console.log(err);
-                        }
-                    });
-                });
-        }
-        write()
     }
-
 
     public static writeModuleSettingsToStorage(theModule: Process): void {
         const settingMap: Map<string, any> = new Map();
@@ -45,6 +26,31 @@ export class StorageHandler {
         })
 
         this.writeToModuleStorage(theModule, theModule.getSettingsFileName(), JSON.stringify(Object.fromEntries(settingMap)));
+    }
+
+
+    public static readFromModuleStorage(theModule: Process, theFileName: string, encoding?: string): string | null {
+        if (encoding === undefined) {
+            encoding = "utf-8";
+        }
+
+        const dirName: string = theModule.getModuleName().toLowerCase();
+        const folderName: string = this.STORAGE_PATH + dirName + "/";
+        const filePath: string = folderName + theFileName;
+
+        try {
+            const content = fs.readFileSync(filePath, { encoding: (encoding as BufferEncoding) });
+            return content;
+        } catch (error) {
+            if (error.code !== 'ENOENT') {
+                throw error;
+            }
+
+            console.log("File not found: " + filePath);
+        }
+
+        return null
+
     }
 
 
@@ -64,10 +70,9 @@ export class StorageHandler {
                 throw err;
             }
 
-            console.log("WARNING: directory not found.")
+            console.log("WARNING: directory not found.");
             return settingMap;
         }
-
 
         const json: any = JSON.parse(contents);
         for (const settingName in json) {

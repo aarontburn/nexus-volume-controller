@@ -141,10 +141,11 @@
     line-height: 1em;
 }
 
-.session-mute-active,
-.session-solo-active {
+
+.session-option-active {
     color: var(--accent-color);
 }
+
 
 .session-muted {
     opacity: 0.5;

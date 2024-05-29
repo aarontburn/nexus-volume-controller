@@ -1,13 +1,22 @@
 import SoundMixer, { AudioSession, Device, DeviceType } from "native-sound-mixer";
+import { Window, windowManager } from "node-window-manager";
+
 
 export interface Session {
     pid: number,
     name: string,
     volume: number,
-    isMuted: boolean
+    isMuted: boolean,
+    backgroundMute: boolean
 }
 
 export class SessionController {
+
+    private static bgMuteSessions: Set<string> = new Set();
+
+    public static init(bgMute: Set<string>): void {
+        this.bgMuteSessions = bgMute;
+    }
 
 
     public static getMasterVolume(): number {
@@ -48,13 +57,13 @@ export class SessionController {
                 return;
             }
 
-
             const pid: number = this.parsePID(session.id);
             const sessionObject: Session = {
                 pid: pid,
                 name: sessionName,
                 volume: session.volume,
-                isMuted: session.mute
+                isMuted: session.mute,
+                backgroundMute: this.bgMuteSessions.has(session.appName)
             }
 
             sessionList.push(sessionObject);
@@ -90,7 +99,21 @@ export class SessionController {
         }
 
         throw new Error("Could not find session with PID: " + pid);
+    }
 
+    public static getSessionsByPath(path: string): AudioSession[] {
+        const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
+
+        const out: AudioSession[] = []
+
+        const sessions: AudioSession[] = masterDevice.sessions;
+        for (let i = 0; i < sessions.length; i++) {
+            if (sessions[i].appName === path) {
+                out.push(sessions[i]);
+            }
+        }
+
+        return out
     }
 
     public static setSessionVolume(pid: number, volume: number): void {
@@ -142,6 +165,48 @@ export class SessionController {
         }
         console.log("Toggling mute for session: " + pid);
     }
+
+
+    public static toggleUnfocusedSession(sessionPID: number): void {
+        const path: string = this.getSessionByPID(sessionPID).appName;
+
+        if (this.bgMuteSessions.has(path)) {
+            this.bgMuteSessions.delete(path);
+        } else {
+            this.bgMuteSessions.add(path);
+        }
+
+        this.windowChanged(windowManager.getActiveWindow());
+    }
+
+
+    static {
+        console.log("Attaching window listener");
+
+        windowManager.on("window-activated", (window: Window) => {
+            this.windowChanged(window);
+        });
+
+    }
+
+    private static windowChanged(currentWindow: Window): void {
+
+        this.bgMuteSessions.forEach(path => {
+            const sessions: AudioSession[] = this.getSessionsByPath(path);
+
+            for (const session of sessions) {
+                const pid = this.parsePID(session.id);
+                this.setSessionMute(pid, path !== currentWindow.path);
+            }
+        });
+
+    }
+
+    public static getBGMutePaths(): Set<string> {
+        return this.bgMuteSessions;
+    }
+
+
 
 
 }

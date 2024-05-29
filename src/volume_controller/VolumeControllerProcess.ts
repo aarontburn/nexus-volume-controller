@@ -3,11 +3,9 @@ import { Process } from "./module_builder/Process";
 import { IPCCallback } from "./module_builder/IPCObjects";
 import { Setting } from "./module_builder/Setting";
 import { BooleanSetting } from "./module_builder/settings/types/BooleanSetting";
-import { exec as lameExec } from 'child_process'
-import { promisify } from 'util';
 import { SessionController } from "./SessionController";
+import { StorageHandler } from "./module_builder/StorageHandler";
 
-const exec = promisify(lameExec);
 
 
 
@@ -18,6 +16,9 @@ export class VolumeControllerProcess extends Process {
     // Modify this to match the path of your HTML file.
     /** @htmlpath */
     private static HTML_PATH: string = path.join(__dirname, "./VolumeControllerHTML.html").replace("dist", "src");
+
+    private static BACKGROUND_MUTE_FILE_NAME = 'bg_mute_paths.txt';
+
 
 
     private static VOLUME_REFRESH_MS = 1000;
@@ -31,7 +32,7 @@ export class VolumeControllerProcess extends Process {
     public initialize(): void {
         super.initialize()
         // Get a audio session.
-
+        this.getBGMuteFromStorage();
 
 
         this.updateSessions();
@@ -76,7 +77,6 @@ export class VolumeControllerProcess extends Process {
     }
 
 
-
     public receiveIPCEvent(eventType: string, data: any[]): void {
         switch (eventType) {
             case "init": {
@@ -109,18 +109,43 @@ export class VolumeControllerProcess extends Process {
             case 'session-mute-state': {
                 const isMasterMuted: boolean = Boolean(data[0]);
                 SessionController.setMasterMute(isMasterMuted);
-
                 break;
             }
-
+            case "mute-unfocused": {
+                SessionController.toggleUnfocusedSession(Number(data[0]));
+                this.writeBackgroundMuteToStorage();
+                break;
+            }
         }
     }
 
+    private getBGMuteFromStorage(): void {
+        const contents: string | null = StorageHandler.readFromModuleStorage(this, VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME);
+
+        if (contents === null) {
+            return;
+        }
+
+        SessionController.init(new Set(contents.split("\n").filter(s => s)));
+
+    }
 
 
+    private writeBackgroundMuteToStorage(): void {
+        let output: string = '';
 
+        const paths: Set<string> = SessionController.getBGMutePaths();
+        paths.forEach(s => {
+            if (s !== '') {
+                output += s + "\n";
+            } 
+        });
 
+        StorageHandler.writeToModuleStorage(
+            this, 
+            VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME, 
+            output.trim());
 
-
+    }
 
 }

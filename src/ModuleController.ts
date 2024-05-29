@@ -1,7 +1,7 @@
 import { BrowserWindow } from "electron";
 import * as path from "path";
 import { IPCHandler } from "./IPCHandler";
-import { StorageHandler } from "./StorageHandler";
+import { StorageHandler } from "./volume_controller/module_builder/StorageHandler";
 import { VolumeControllerProcess } from "./volume_controller/VolumeControllerProcess";
 import { Process } from "./volume_controller/module_builder/Process";
 import { IPCCallback, IPCSource } from "./volume_controller/module_builder/IPCObjects";

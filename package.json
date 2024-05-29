@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "modules-export-script": "github:aarontburn/modules-export-script",
-    "native-sound-mixer": "https://gitpkg.now.sh/aarontburn/native-sound-mixer/dist?master"
+    "native-sound-mixer": "https://gitpkg.now.sh/aarontburn/native-sound-mixer/dist?master",
+    "node-window-manager": "^2.2.4"
   }
 }
