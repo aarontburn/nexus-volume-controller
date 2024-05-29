@@ -122,6 +122,7 @@ export class ModuleController implements IPCSource {
                 backgroundThrottling: false,
                 preload: path.join(__dirname, "preload.js"),
             },
+            autoHideMenuBar: true
         });
         this.window.loadFile(path.join(__dirname, "../index.html"));
         IPCHandler.construct(this.window, this.ipc);
