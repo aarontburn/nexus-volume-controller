@@ -50,7 +50,10 @@ export class VolumeControllerProcess extends Process {
         this.notifyObservers('master-update', masterInfo);
 
 
-        this.notifyObservers("vol-sessions", SessionController.getSessions());
+        const [sessions, soloedSession] = SessionController.getSessions();
+        this.notifyObservers("vol-sessions", sessions);
+        this.notifyObservers("soloed-track", soloedSession);
+
         this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
 
     }
@@ -90,7 +93,7 @@ export class VolumeControllerProcess extends Process {
                 SessionController.setSessionVolume(sessionPID, newVolume);
                 break;
             }
-            case "session-muted": {
+            case "session-mute": {
                 const sessionPID: number = Number(data[0]);
                 SessionController.setSessionMute(sessionPID, !SessionController.isSessionMuted(sessionPID));
                 console.log("Toggling mute for session: " + sessionPID);

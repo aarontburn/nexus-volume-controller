@@ -41,11 +41,15 @@ interface Session {
             }
             case "vol-sessions": {
                 SessionBox.updateSessions(data[0]);
-                // refreshSessions(data[0]);
+
                 break;
             }
             case "session-pid-visibility-modified": {
                 SessionBox.setPIDVisibility(data[0]);
+                break;
+            }
+            case 'soloed-track': {
+                SessionBox.sessionSoloed(data[0])
                 break;
             }
         }
@@ -66,10 +70,8 @@ interface Session {
 
     masterMuteButton.addEventListener('click', () => {
         if (masterMuteButton.classList.contains(CONTROL_ACTIVE_CSS)) {
-            // unmute
             setMasterMute(false);
             sendToProcess('session-mute-state', false);
-
             return;
         }
         sendToProcess('session-mute-state', true);
@@ -83,7 +85,6 @@ interface Session {
             masterSessionText.classList.add('session-muted');
             masterSlider.classList.add('session-muted');
             masterVolumeText.classList.add('session-muted');
-
             masterMuteButton.classList.add(CONTROL_ACTIVE_CSS);
             return;
         }
@@ -91,7 +92,6 @@ interface Session {
         masterSessionText.classList.remove('session-muted');
         masterSlider.classList.remove('session-muted');
         masterVolumeText.classList.remove('session-muted');
-
         masterMuteButton.classList.remove(CONTROL_ACTIVE_CSS);
 
     }
@@ -164,14 +164,15 @@ interface Session {
         private static readonly sessionBoxMap: Map<number, SessionBox> = new Map();
         private static isPIDVisible: boolean = false;
 
+        public static sessionSoloed(session: Session) {
+            this.sessionBoxMap.forEach((sessionBox, pid) => {
+                sessionBox.setSoloed(session !== null && session.pid === pid)
+            });
+        }
 
         public static setPIDVisibility(isPIDVisible: boolean): void {
             this.isPIDVisible = isPIDVisible;
-
-            this.sessionBoxMap.forEach((sessionBox, _) => {
-                sessionBox.updateName()
-            })
-
+            this.sessionBoxMap.forEach((sessionBox, _) => sessionBox.updateName());
         }
 
         public static updateSessions(sessions: Session[]): void {
@@ -200,7 +201,7 @@ interface Session {
         }
 
 
-        private readonly session: Session;
+        private session: Session;
 
         private nameLabel: HTMLElement;
         private volumeLabel: HTMLElement;
@@ -263,8 +264,10 @@ interface Session {
 
             this.muteButton.addEventListener("click", () => {
                 this.setMute();
-                sendToProcess('session-muted', session.pid);
+                sendToProcess('session-mute', session.pid);
+
             });
+
 
             this.soloButton.addEventListener("click", () => {
                 this.toggleSolo();
@@ -283,7 +286,14 @@ interface Session {
             });
 
             this.update(session);
+        }
 
+        public setSoloed(isSoloed: boolean) {
+            if (isSoloed) {
+                this.soloButton.classList.add(CONTROL_ACTIVE_CSS);
+            } else {
+                this.soloButton.classList.remove(CONTROL_ACTIVE_CSS)
+            }
         }
 
         public getHTML(): HTMLDivElement {
@@ -296,9 +306,10 @@ interface Session {
                 throw new Error(`Mismatched session pid. Expected: ${this.session.pid} | Received: ${session.pid}`);
             }
 
+            this.session = session;
+
             const roundedVolume: number = Math.round(session.volume * 100);
             const formattedName: string = this.getFormattedName();
-
 
             this.setMute(session.isMuted);
             this.setBGMute(session.backgroundMute);
@@ -315,30 +326,37 @@ interface Session {
 
 
         public toggleSolo() {
-            if (this.parentDiv.classList.contains('muted-session-box')) { // soloed track is muted. unmute it and mute others
-                SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
-                    sessionBox.setMute(pid !== this.session.pid)
-                });
-                return;
-            }
-
             let allMuted = true;
-            SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
-                if (pid !== this.session.pid && !sessionBox.parentDiv.classList.contains('muted-session-box')) {
+    
+            SessionBox.sessionBoxMap.forEach((sessionBox, otherPID) => {
+                if (!sessionBox.session.isLocked
+                    && this.session.pid !== otherPID
+                    && !sessionBox.parentDiv.classList.contains('muted-session-box')) {
+                        
                     allMuted = false;
                 }
-            });
-
-            if (allMuted) { // everything is muted BUT the soloed track, unmute everything
+            })
+    
+            if (allMuted) {
+                if (!this.parentDiv.classList.contains('muted-session-box')) { // Solo already applied, remove it
+                    SessionBox.sessionBoxMap.forEach((sessionBox, _) => {
+                        if (!sessionBox.session.isLocked) { // session is not locked, don't unmute it
+                            sessionBox.setMute(false);
+                        }
+                    })
+                } else { // Everything including the solo session is muted. Unmute solo
+                    this.setMute(false);
+                }
+            } else { // Apply solo; mute everything that isn't the soloed session or locked
                 SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
-                    sessionBox.setMute(false);
-                });
-            } else {
-                SessionBox.sessionBoxMap.forEach((sessionBox, pid) => {
-                    sessionBox.setMute(pid !== this.session.pid);
+                    if (!sessionBox.session.isLocked) {
+                        sessionBox.setMute(pid !== this.session.pid);
+                    }
                 });
             }
+
         }
+
 
         public setLocked(isLocked?: boolean) {
             if (isLocked === undefined) {
@@ -382,7 +400,7 @@ interface Session {
 
             if (isMuted) {
                 this.muteButton.classList.add(sessionMuteActive);
-                this.parentDiv?.classList.add('muted-session-box');
+                this.parentDiv.classList.add('muted-session-box');
 
                 // Make specific elements grayed
                 for (let i = 0; i < grayScalableElements.length; i++) {
@@ -394,13 +412,14 @@ interface Session {
             }
 
             this.muteButton.classList.remove(sessionMuteActive);
-            this.parentDiv?.classList.remove('muted-session-box');
+            this.parentDiv.classList.remove('muted-session-box');
 
 
             for (let i = 0; i < grayScalableElements.length; i++) {
                 const element = grayScalableElements.item(i);
                 element.classList.remove(sessionMuted);
             }
+
         }
 
 

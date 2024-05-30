@@ -55,11 +55,14 @@ export class SessionController {
     }
 
 
-    public static getSessions(): Session[] {
+    public static getSessions(): [Session[], Session]{
         const masterDevice: Device | undefined = SoundMixer.getDefaultDevice(DeviceType.RENDER);
         const sessions: AudioSession[] = masterDevice.sessions;
 
         const sessionList: Session[] = [];
+
+        let soloedTrack: Session = undefined;
+        let unmutedTracks: number = 0;
 
         sessions.forEach((session: AudioSession) => {
 
@@ -67,6 +70,8 @@ export class SessionController {
             if (sessionName === undefined) {
                 return;
             }
+
+
 
             const pid: number = this.parsePID(session.id);
             const sessionObject: Session = {
@@ -78,10 +83,18 @@ export class SessionController {
                 isLocked: this.lockedSessions.has(pid)
             }
 
+            
+            if (!session.mute) {
+                if (soloedTrack === undefined) {
+                    soloedTrack = sessionObject;
+                }
+                unmutedTracks++;
+            }
+
             sessionList.push(sessionObject);
         })
 
-        return sessionList;
+        return [sessionList, unmutedTracks > 1 ? null : soloedTrack];
     }
 
 
@@ -156,23 +169,33 @@ export class SessionController {
 
         sessions.forEach(session => {
             const sessionPID: number = this.parsePID(session.id);
-            if (sessionPID !== pid && !this.isSessionMuted(sessionPID)) {
+            if (!this.lockedSessions.has(sessionPID)
+                && sessionPID !== pid
+                && !this.isSessionMuted(sessionPID)) {
+
                 allMuted = false;
             }
         })
 
         if (allMuted) {
             if (!SessionController.isSessionMuted(pid)) { // Solo already applied, remove it
-                sessions.forEach(sessions => {
-                    SessionController.setSessionMute(this.parsePID(sessions.id), false);
+                sessions.forEach(session => {
+                    const sessionPID = this.parsePID(session.id);
+                    if (!this.lockedSessions.has(sessionPID)) { // session is not locked, mute it
+                        SessionController.setSessionMute(sessionPID, false);
+                    }
                 });
             } else { // Everything including the solo session is muted. Unmute solo
                 SessionController.setSessionMute(pid, false);
             }
         } else { // Apply solo
-            sessions.forEach(sessions => {
-                const sessionPID = this.parsePID(sessions.id);
-                SessionController.setSessionMute(sessionPID, sessionPID !== pid);
+            sessions.forEach(session => {
+                const sessionPID = this.parsePID(session.id);
+                if (!this.lockedSessions.has(sessionPID)) {
+                    SessionController.setSessionMute(sessionPID, sessionPID !== pid);
+                }
+
+
             });
         }
         console.log("Toggling mute for session: " + pid);
