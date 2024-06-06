@@ -4,8 +4,19 @@ import { Setting } from "./Setting";
 
 
 
+export interface ModuleInfo {
+    moduleName: string,
+    author: string,
+    version: string,
+    description: string, 
+    buildVersion: number,
+    platforms: string[]
+}
+
 
 export abstract class Process implements IPCSource {
+
+    public moduleInfo: ModuleInfo;
 
     public moduleSettings = new ModuleSettings(this);
 
@@ -47,10 +58,19 @@ export abstract class Process implements IPCSource {
     public initialize(): void {
         this.hasBeenInit = true;
         // Override this, and do a super.initialize() after initializing model.
-
-
-        
     }
+
+    public getModuleInfo(): ModuleInfo {
+        return this.moduleInfo;
+    }
+
+    public setModuleInfo(moduleInfo: ModuleInfo) {
+        if (this.moduleInfo !== undefined) {
+            throw new Error("Attempted to reassign module info for " + this.moduleName);
+        }
+        this.moduleInfo = moduleInfo;
+    }
+
 
     public abstract registerSettings(): Setting<unknown>[];
 
@@ -75,7 +95,7 @@ export abstract class Process implements IPCSource {
 
     public abstract receiveIPCEvent(eventType: string, data: any[]): void
 
-    public notifyObservers(eventType: string, ...data: any[]): void {
+    public notifyObservers(eventType: string, ...data: any): void {
         this.ipcCallback.notifyRenderer(this, eventType, ...data);
         // IPCHandler.fireEventToRenderer(this, eventType, data);
     }

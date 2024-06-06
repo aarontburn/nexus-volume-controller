@@ -1,6 +1,22 @@
 import { Setting } from "./Setting";
 
+
+
+export class InputElement {
+    id: string;
+    inputType: string;
+    attribute: string;
+}
+
+export interface ChangeEvent {
+    id: string,
+    attribute: string,
+    value: any
+}
+
 export abstract class SettingBox<T> {
+
+    protected static UNDO_ID: string = 'undo-button';
 
     public setting: Setting<T>;
 
@@ -9,14 +25,13 @@ export abstract class SettingBox<T> {
     }
 
     public getUI(): string {
-        const html: string = `
+        return `
             <div class="setting">
                 ${this.createLeft()}
                 <div class="spacer"></div>
                 ${this.createRight()}
             </div>
         `;
-        return html;
     }
 
     /**
@@ -25,7 +40,7 @@ export abstract class SettingBox<T> {
     public createLeft(): string {
         return `
             <div class="left-component" style="display: inline-block;">
-                <input id="${this.setting.getId()}" type="${this.getInputType()}" value='${this.setting.getValue()}'>
+                <input id="${this.setting.getId()}" type="text" value='${this.setting.getValue()}'>
             </div>
         `;
     }
@@ -33,7 +48,7 @@ export abstract class SettingBox<T> {
     public createRight(): string {
         return `
             <div class="right-component" style="display: inline-block;">
-                <h1>${this.setting.getSettingName()}</h1>
+                <h1><span id='${SettingBox.UNDO_ID + "_" + this.setting.getId()}'>↩</span> ${this.setting.getSettingName()}</h1>
                 <p>${this.setting.getDescription()}</p>
             </div>
         `;
@@ -44,33 +59,32 @@ export abstract class SettingBox<T> {
         return this.setting;
     }
 
-    public getInteractiveIds(): string[] {
-        return [this.setting.getId()];
+    public getInputIdAndType(): InputElement[] {
+        return [
+            { id: this.setting.getId(), inputType: "text", attribute: 'value' }
+        ];
     }
 
-    public getInputType(): string {
-        return "text";
+    public onChange(newValue: any): ChangeEvent[] {
+        return [
+            { id: this.setting.getId(), attribute: 'value', value: newValue }
+        ]
     }
 
     /**
-     * Overrideable method to add custom CSS to a setting component.
+     * Overridable method to add custom CSS to a setting component.
      * 
      * @returns A valid CSS style string.
      */
     public getStyle(): string {
-        return "";
+        return '';
     }
 
-    /**
-     * Overrideable method to determine what value of the HTML holds the value.
-     * For example, the data stored in <input type="text"> is stored in the "value"
-     * property, while a checkbox is stored in "checked".
-     * 
-     * @returns 
-     */
-    public getAttribute(): string {
-        return "value";
-    }
+
+
+
+
+
 
 
 }

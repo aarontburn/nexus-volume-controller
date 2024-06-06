@@ -1,4 +1,4 @@
-import { SettingBox } from "../../SettingBox";
+import { ChangeEvent, InputElement, SettingBox } from "../../SettingBox";
 
 export class StringSettingBox extends SettingBox<string> {
 
@@ -12,7 +12,7 @@ export class StringSettingBox extends SettingBox<string> {
         return `
             <div class="right-component">
                 <div style="display: flex;">
-                    <h1>${this.getSetting().getSettingName()}</h1>
+                    <h1><span id='${SettingBox.UNDO_ID + "_" + this.setting.getId()}'>↩</span> ${this.getSetting().getSettingName()}</h1>
                     <p style="align-self: flex-end; padding-left: 24px;">${this.getSetting().getDescription()}</p>
                 </div>
 
@@ -22,8 +22,12 @@ export class StringSettingBox extends SettingBox<string> {
         `;
     }
 
-    public getInteractiveIds(): string[] {
-        return [this.getSetting().getId()];
+    public getInputIdAndType(): InputElement[] {
+        return [{ id: this.getSetting().getId(), inputType: 'text', attribute: 'value' }];
+    }
+
+    public onChange(newValue: any): ChangeEvent[] {
+        return [{ id: this.getSetting().getId(), attribute: 'value', value: newValue }];
     }
 
 

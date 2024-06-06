@@ -1,5 +1,5 @@
 import { Setting } from "../../Setting";
-import { SettingBox } from "../../SettingBox";
+import { ChangeEvent, InputElement, SettingBox } from "../../SettingBox";
 
 export class BooleanSettingBox extends SettingBox<boolean> {
     private parentSetting: Setting<boolean> = this.getSetting();
@@ -8,17 +8,20 @@ export class BooleanSettingBox extends SettingBox<boolean> {
         return `
             <div class="left-component">
                 <label class="switch">
-                    <input type="${this.getInputType()}" id="${this.parentSetting.getId()}" ${this.parentSetting.getValue() ? 'checked' : ''}>
+                    <input type="checkbox" id="${this.parentSetting.getId()}" ${this.parentSetting.getValue() ? 'checked' : ''}>
                     <span class="slider round"></span>
                 </label>   
             </div> 
         `;
     }
 
-    public getAttribute(): string {
-        return "checked";
+    public getInputIdAndType(): InputElement[] {
+        return [{ id: this.parentSetting.getId(), inputType: "checkbox", attribute: 'checked' }];
     }
 
+    public onChange(newValue: any): ChangeEvent[] {
+        return [{id: this.parentSetting.getId(), attribute: 'checked', value: newValue}]
+    }
 
     public getStyle(): string {
         return `
@@ -45,9 +48,9 @@ export class BooleanSettingBox extends SettingBox<boolean> {
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background-color: var(--default-background-color);
-                -webkit-transition: .4s;
-                transition: .4s;
+                background-color: #7f7f7f;
+                -webkit-transition: .3s;
+                transition: .3s;
             }
             
             .slider:before {
@@ -89,13 +92,7 @@ export class BooleanSettingBox extends SettingBox<boolean> {
     }
 
 
-    public getInteractiveIds(): string[] {
-        return [this.parentSetting.getId()];
-    }
 
-    public getInputType(): string {
-        return "checkbox";
-    }
 
 
 
