@@ -70,7 +70,7 @@ export class HomeProcess extends Process {
 		const abbreviatedDate: string = date.toLocaleString(HomeProcess.LOCALE, HomeProcess.ABBREVIATED_DATE_FORMAT);
 
 		const formattedStandardTime: string = standardTime.replace(/:/g, this.createSpan(":"));
-		const formattedAbbreviatedDate: string = abbreviatedDate.replace(/\//g, this.createSpan('/'));
+		const formattedAbbreviatedDate: string = abbreviatedDate.replace(/\//g, this.createSpan('.'));
 		const formattedFullDate: string = fullDate.replace(/,/g, this.createSpan(','));
 		const formattedMilitaryTime: string = militaryTime.replace(/:/g, this.createSpan(":"))
 

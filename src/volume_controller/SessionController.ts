@@ -65,13 +65,10 @@ export class SessionController {
         let unmutedTracks: number = 0;
 
         sessions.forEach((session: AudioSession) => {
-
             const sessionName: string = session.name === '' ? "System Volume" : this.parsePathToApplicationName(session.appName);
             if (sessionName === undefined) {
                 return;
             }
-
-
 
             const pid: number = this.parsePID(session.id);
             const sessionObject: Session = {
@@ -98,10 +95,9 @@ export class SessionController {
     }
 
 
-    private static readonly REGEX = /\\[\w\.]+$/g
 
     private static parsePathToApplicationName(path: string): string | null {
-        const name = path.match(this.REGEX)?.pop().substring(1).split(".")[0];
+        const name: string = path.substring(path.lastIndexOf('\\') + 1).split(".")[0];
         return name;
     }
 
