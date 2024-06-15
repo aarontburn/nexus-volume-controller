@@ -4,49 +4,67 @@ import { Process } from "./Process";
 import { Setting } from "./Setting";
 
 export class StorageHandler {
-    private static PATH: string = app.getPath("home") + "/.modules/";
-    private static STORAGE_PATH: string = this.PATH + "/storage/";
-    private static EXTERNAL_MODULES_PATH: string = this.PATH + "/external_modules/"
-    private static COMPILED_MODULES_PATH: string = this.PATH + "/built/"
+    private static readonly PATH: string = app.getPath("home") + "/.modules/";
+    private static readonly STORAGE_PATH: string = this.PATH + "/storage/";
+    private static readonly EXTERNAL_MODULES_PATH: string = this.PATH + "/external_modules/"
+    private static readonly COMPILED_MODULES_PATH: string = this.PATH + "/built/"
 
+    /**
+     *  Creates necessary directories. Should not be called by any module.
+     */
     public static async createDirectories(): Promise<void> {
         await fs.promises.mkdir(this.STORAGE_PATH, { recursive: true })
         await fs.promises.mkdir(this.EXTERNAL_MODULES_PATH, { recursive: true })
         await fs.promises.mkdir(this.COMPILED_MODULES_PATH, { recursive: true })
     }
 
-    public static async writeToModuleStorage(theModule: Process, theFileName: string, theContents: string): Promise<void> {
-        const dirName: string = theModule.getModuleName().toLowerCase();
+    /**
+     *  Write to a modules storage.
+     * 
+     *  @param module   The source module. 
+     *  @param fileName The name of the file, including file extension.
+     *  @param contents The contents to write in the file.
+     */
+    public static async writeToModuleStorage(module: Process, fileName: string, contents: string): Promise<void> {
+        const dirName: string = module.getName().toLowerCase();
         const folderName: string = this.STORAGE_PATH + dirName + "/";
-        const filePath: string = folderName + theFileName;
+        const filePath: string = folderName + fileName;
 
         await fs.promises.mkdir(folderName, { recursive: true });
-        await fs.promises.writeFile(filePath, theContents);
-
+        await fs.promises.writeFile(filePath, contents);
     }
 
-    public static writeModuleSettingsToStorage(theModule: Process): void {
+    /**
+     *  Writes the module settings to storage.
+     * 
+     *  @param module The source module.
+     */
+    public static writeModuleSettingsToStorage(module: Process): void {
         const settingMap: Map<string, any> = new Map();
 
-        theModule.getSettings().getSettingsList().forEach((setting: Setting<unknown>) => {
-            settingMap.set(setting.getSettingName(), setting.getValue());
+        module.getSettings().getSettingsList().forEach((setting: Setting<unknown>) => {
+            settingMap.set(setting.getName(), setting.getValue());
         })
 
-        this.writeToModuleStorage(theModule, theModule.getSettingsFileName(), JSON.stringify(Object.fromEntries(settingMap)));
+        this.writeToModuleStorage(module, module.getSettingsFileName(), JSON.stringify(Object.fromEntries(settingMap)));
     }
 
 
-    public static readFromModuleStorage(theModule: Process, theFileName: string, encoding?: string): string | null {
-        if (encoding === undefined) {
-            encoding = "utf-8";
-        }
-
-        const dirName: string = theModule.getModuleName().toLowerCase();
+    /**
+     *  Reads a file from the modules storage.
+     * 
+     *  @param module   The source module.
+     *  @param fileName The name of the file to read.
+     *  @param encoding The file encoding. Default is 'utf-8'
+     *  @returns        The contents of the file, or null if there was an error reading it.
+     */
+    public static readFromModuleStorage(module: Process, fileName: string, encoding: string = 'utf-8'): string | null {
+        const dirName: string = module.getName().toLowerCase();
         const folderName: string = this.STORAGE_PATH + dirName + "/";
-        const filePath: string = folderName + theFileName;
+        const filePath: string = folderName + fileName;
 
         try {
-            const content = fs.readFileSync(filePath, { encoding: (encoding as BufferEncoding) });
+            const content: string = fs.readFileSync(filePath, { encoding: (encoding as BufferEncoding) });
             return content;
         } catch (error) {
             if (error.code !== 'ENOENT') {
@@ -60,13 +78,18 @@ export class StorageHandler {
 
     }
 
-
-    public static readSettingsFromModuleStorage(theModule: Process): Map<string, any> {
+    /**
+     *  Read settings from module storage.
+     * 
+     *  @param module The source module
+     *  @returns A map of setting names to the setting.
+     */
+    public static readSettingsFromModuleStorage(module: Process): Map<string, any> {
         const settingMap: Map<string, any> = new Map();
 
-        const dirName: string = theModule.getModuleName().toLowerCase();
+        const dirName: string = module.getName().toLowerCase();
         const folderName: string = this.STORAGE_PATH + dirName + "/";
-        const filePath: string = folderName + theModule.getSettingsFileName();
+        const filePath: string = folderName + module.getSettingsFileName();
 
 
         let contents: string;

@@ -54,7 +54,7 @@ export class ModuleController implements IPCSource {
 
             const moduleSettings: ModuleSettings = module.getSettings();
             settingsMap.forEach((settingValue: any, settingName: string) => {
-                const setting: Setting<unknown> = moduleSettings.getSettingByName(settingName);
+                const setting: Setting<unknown> = moduleSettings.getSetting(settingName);
                 if (setting == undefined) {
                     console.log("WARNING: Invalid setting name: '" + settingName + "' found.");
                 } else {
@@ -71,7 +71,7 @@ export class ModuleController implements IPCSource {
     private init(): void {
         const map: Map<string, string> = new Map<string, string>();
         this.activeModules.forEach((module: Process) => {
-            map.set(module.getModuleName(), module.getHtmlPath());
+            map.set(module.getName(), module.getHTMLPath());
         });
         ipcCallback.notifyRenderer(this, 'load-modules', map);
         this.swapLayouts(HomeProcess.MODULE_NAME);
@@ -95,7 +95,7 @@ export class ModuleController implements IPCSource {
         this.activeModules.forEach((module: Process) => {
             console.log("Registering " + module.getIPCSource() + "-process");
             this.ipc.on(module.getIPCSource() + "-process", (_, eventType: string, data: any[]) => {
-                this.modulesByName.get(module.getModuleName()).receiveIPCEvent(eventType, data);
+                this.modulesByName.get(module.getName()).handleEvent(eventType, data);
             })
         });
     }
@@ -108,7 +108,7 @@ export class ModuleController implements IPCSource {
 
     private swapLayouts(moduleName: string): void {
         const module: Process = this.modulesByName.get(moduleName);
-        module.onGuiShown();
+        module.onGUIShown();
         ipcCallback.notifyRenderer(this, 'swap-modules-renderer', moduleName);
     }
 
@@ -138,7 +138,7 @@ export class ModuleController implements IPCSource {
 
     }
     private addModule(module: Process): void {
-        this.modulesByName.set(module.getModuleName(), module);
+        this.modulesByName.set(module.getName(), module);
         this.activeModules.push(module);
     }
 

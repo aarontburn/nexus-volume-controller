@@ -11,24 +11,25 @@ export class StringSettingBox extends SettingBox<string> {
     public createRight(): string {
         return `
             <div class="right-component">
-                <div style="display: flex;">
-                    <h1><span id='${SettingBox.UNDO_ID + "_" + this.setting.getId()}'>↩</span> ${this.getSetting().getSettingName()}</h1>
+                <div style="display: flex; flex-wrap: wrap">
+                    <h1><span id='${this.resetID}'>↩</span> ${this.getSetting().getName()}</h1>
                     <p style="align-self: flex-end; padding-left: 24px;">${this.getSetting().getDescription()}</p>
                 </div>
 
-                <input type="text" style="width: 100%;" 
-                    value="${this.getSetting().getValue()}" id="${this.getSetting().getId()}">
+                <input type="text" style="width: 500px; box-sizing: border-box; padding-left: 15px; margin-top: 5px;" 
+                    value="${this.getSetting().getValue()}" id="${this.getSetting().getID()}">
             </div>
         `;
     }
 
     public getInputIdAndType(): InputElement[] {
-        return [{ id: this.getSetting().getId(), inputType: 'text', attribute: 'value' }];
+        return [{ id: this.getSetting().getID(), inputType: 'text' }];
     }
 
     public onChange(newValue: any): ChangeEvent[] {
-        return [{ id: this.getSetting().getId(), attribute: 'value', value: newValue }];
+        return [{ id: this.getSetting().getID(), attribute: 'value', value: newValue }];
     }
+
 
 
 

@@ -1,27 +1,25 @@
-interface ModuleInfo {
-    moduleName: string,
-    author: string,
-    version: string,
-    description: string,
-    buildVersion: number,
-    platforms: string[]
-}
-
-interface InputElement {
-    id: string,
-    inputType: string,
-    attribute: string
-}
-
-interface ChangeEvent {
-    id: string,
-    attribute: string,
-    value: any
-}
-
-
-
 (() => {
+    interface ModuleInfo {
+        moduleName: string,
+        author: string,
+        version: string,
+        description: string,
+        buildVersion: number,
+        platforms: string[]
+    }
+    
+    interface InputElement {
+        id: string,
+        inputType: string,
+        returnValue?: any
+    }
+    
+    interface ChangeEvent {
+        id: string,
+        attribute: string,
+        value: any
+    }
+
     const MODULE_NAME = "Settings"
     const MODULE_PROCESS_NAME = MODULE_NAME.toLowerCase() + "-process";
     const MODULE_RENDERER_NAME = MODULE_NAME.toLowerCase() + "-renderer"
@@ -81,15 +79,17 @@ interface ChangeEvent {
         }
     });
 
-    function populateSettings(data: { module: string, moduleInfo: any, settings: any[] }[]): void {
-        data.forEach((obj: { module: string, moduleInfo: any, settings: any[] }) => {
+    function populateSettings(data: { module: string, moduleInfo: any }[]): void {
+        let firstModule: HTMLElement;
+
+        data.forEach((obj: { module: string, moduleInfo: any }) => {
             const moduleName: string = obj.module;
 
             // Setting group click button
             const groupElement: HTMLElement = document.createElement("p");
             groupElement.innerText = moduleName;
             groupElement.addEventListener("click", () => {
-                if (currentlySelectedTab != undefined) {
+                if (currentlySelectedTab !== undefined) {
                     currentlySelectedTab.style.color = "";
                 }
                 currentlySelectedTab = groupElement;
@@ -98,26 +98,43 @@ interface ChangeEvent {
                 sendToProcess('swap-settings-tab', moduleName);
             });
 
+            if (firstModule === undefined) {
+                firstModule = groupElement;
+            }
+
             moduleList.insertAdjacentElement("beforeend", groupElement);
         });
+        firstModule.click();
     }
+
+    const inputTypeToStateMap: Map<string, string> = new Map([
+        ['text', 'value'],
+        ['number', 'value'],
+        ['password', 'value'],
+        ['checkbox', 'checked'],
+        ['radio', 'checked'],
+        ['button', 'value'],
+        ['submit', 'value'],
+        ['file', 'files'],
+        ['color', 'value'],
+        ['date', 'value'],
+        ['range', 'value'],
+        ['select', 'value']
+    ]);
+
+    const keyBlacklist: string[] = [
+        'moduleName', 'module_name',
+        'buildVersion', 'build_version',
+    ];
 
 
     function swapTabs(tab: any): void {
         function getModuleInfoHTML(moduleInfo: any): string {
             const toSentenceCase = (key: string) => key.charAt(0).toUpperCase() + key.slice(1);
-
             const inner: string[] = [];
-
             inner.push(`<p style="font-size: 27px; color: var(--accent-color);">${moduleInfo.moduleName || tab.module}</p>`);
-
-            const blacklist: string[] = [
-                'moduleName', 'module_name',
-                'buildVersion', 'build_version',
-            ];
-
             for (const key in moduleInfo) {
-                if (blacklist.includes(key)) {
+                if (keyBlacklist.includes(key)) {
                     continue;
                 }
 
@@ -126,8 +143,13 @@ interface ChangeEvent {
                     continue;
                 }
 
-                inner.push(`<p><span>${toSentenceCase(key)}:</span> ${value}</p>`);
+                if (key.toUpperCase() === "LINK") {
+                    inner.push(`<p><span>${toSentenceCase(key)}: </span><a href=${value}>${value}</a><p/>`);
+                    continue;
+                }
 
+
+                inner.push(`<p><span>${toSentenceCase(key)}:</span> ${value}</p>`);
             }
 
             return inner.reduce((acc, html) => acc += html + "\n", '');
@@ -154,61 +176,72 @@ interface ChangeEvent {
             const settingId: string = settingInfo.settingId;
             const inputTypeAndId: InputElement[] = settingInfo.inputTypeAndId;
             const html: string = settingInfo.ui;
-            const style: string = settingInfo.style;
+            const [sourceObject, style]: string[] = settingInfo.style;
 
 
             settingsList.insertAdjacentHTML("beforeend", html);
 
-            // Attach events to undo button
-            const undoButton: HTMLElement = document.getElementById(`undo-button_${settingId}`);
-            undoButton?.addEventListener("click", () => {
-                sendToProcess("setting-undo", settingId);
+            // Attach events to reset button
+            const resetButton: HTMLElement = document.getElementById(`reset-button_${settingId}`);
+            resetButton?.addEventListener("click", () => {
+                sendToProcess("setting-reset", inputTypeAndId[0].id);
             });
 
             // Add custom setting css to setting
-            if (style != "") {
-                const styleId = inputTypeAndId[0] + "_style";
-                if (document.getElementById(styleId) == null) {
+            if (style !== "") {
+                const styleId = sourceObject;
+                if (document.getElementById(styleId) === null) {
                     const styleSheet: HTMLElement = document.createElement('style')
-                    styleSheet.id = styleId;
+                    styleSheet.id = sourceObject;
                     styleSheet.innerHTML = style
-                    document.body.appendChild(styleSheet);
+                    settingsList.appendChild(styleSheet);
                 }
             }
 
             inputTypeAndId.forEach((group: InputElement) => {
                 const id: string = group.id;
                 const inputType: string = group.inputType;
-                const attribute: string = group.attribute;
+                const returnValue: string | undefined = group.returnValue;
+                let attribute: string = inputTypeToStateMap.get(inputType);
+
+                if (attribute === undefined) {
+                    console.error('Invalid input type found: ' + inputType);
+                    console.error('Attempting to assign it "value"');
+                    attribute = 'value';
+                }
+
+
 
                 const element: HTMLElement = document.getElementById(id);
 
                 switch (inputType) {
-                    case "checkbox": {
-                        element.addEventListener('change', () => {
-                            sendToProcess("setting-modified", id, (element as any)[attribute]);
-                        });
-                        break;
-                    }
                     case 'number':
                     case 'text': {
                         element.addEventListener('keyup', (event: KeyboardEvent) => {
                             if (event.key === "Enter") {
-                                sendToProcess("setting-modified", id, (element as any)[attribute]);
+                                sendToProcess("setting-modified", id, returnValue ? returnValue : (element as any)[attribute]);
                                 element.blur();
                             }
                         });
 
-                        element.addEventListener('blur', () => {
-                            sendToProcess("setting-modified", id, (element as any)[attribute]);
-                        });
+                        element.addEventListener('blur',
+                            () => sendToProcess("setting-modified", id, returnValue ? returnValue : (element as any)[attribute]));
 
                         break;
                     }
-                    case 'input': {
-                        element.addEventListener('input', () => {
-                            sendToProcess('setting-modified', id, (element as any)[attribute])
+                    case 'color':
+                    case 'range': {
+                        element.addEventListener('input',
+                            () => sendToProcess('setting-modified', id, returnValue ? returnValue : (element as any)[attribute]))
+                        break;
+                    }
+                    case "checkbox":
+                    case 'select':
+                    case 'radio': {
+                        element.addEventListener('change', () => {
+                            sendToProcess('setting-modified', id, returnValue ? returnValue : (element as any)[attribute])
                         })
+                        break;
                     }
                     // TODO: Add additional options
                 }
@@ -217,6 +250,51 @@ interface ChangeEvent {
             });
 
         });
+
+        // Add spacers to the bottom
+        const spacerHTML: string = `
+            <br/>
+            <br/>
+        `
+
+        settingsList.insertAdjacentHTML("beforeend", spacerHTML);
+
+    }
+
+    function openLinkPopup(link: string): void {
+        const html: string = `
+            <div class="dialog">
+                <h3 class='disable-highlight'>You are navigating to an external website.</h3>
+                <h4 class='link'>${link}</h4>
+                <h4 style="padding-top: 10px;" class='disable-highlight'>Only visit the site if you trust it.</h4>
+
+                <div style="display: flex; justify-content: space-between; margin: 0px 15px; margin-top: 15px;">
+                    <h3 class='disable-highlight' id='dialog-cancel'>Cancel</h3>
+                    <h3 class='disable-highlight' id='dialog-proceed'>Proceed</h3>
+                </div>
+            </div>
+        `
+
+        const div: HTMLElement = document.createElement("div");
+        div.classList.add('overlay')
+        div.innerHTML = html
+
+        document.body.prepend(div)
+
+
+        div.addEventListener('click', (event) => {
+            if ((event.target as HTMLElement).className.includes('overlay')) {
+                div.remove();
+            };
+        });
+
+        div.querySelector('#dialog-cancel').addEventListener('click', () => div.remove());
+
+        div.querySelector('#dialog-proceed').addEventListener('click', () => {
+            sendToProcess("open-link", link);
+            div.remove();
+        });
+
     }
 
 
@@ -254,6 +332,13 @@ interface ChangeEvent {
             }
         };
     }
+
+    document.body.addEventListener('click', event => {
+        if ((event.target as HTMLElement).tagName.toLowerCase() === 'a') {
+            event.preventDefault();
+            openLinkPopup((event.target as HTMLAnchorElement).href)
+        }
+    });
 })();
 
 

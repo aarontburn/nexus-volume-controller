@@ -13,14 +13,9 @@ interface Session {
 
 (() => { // Wrapped in an anonymous function for scoping.
 
-    // Change this to EXACTLY what is in the {MODULE_NAME}Module.MODULE_NAME field.
     const MODULE_NAME = "Volume Controller"
     const MODULE_PROCESS_NAME = MODULE_NAME.toLowerCase() + "-process";
     const MODULE_RENDERER_NAME = MODULE_NAME.toLowerCase() + "-renderer"
-
-    // If this is not shown in the developer console, the renderer wasn't properly initialized.
-    // Check the {MODULE_NAME}HTML.html script name.
-    console.log(MODULE_RENDERER_NAME + " initialized.");
 
     const sendToProcess = (eventType: string, ...data: any): void => {
         window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);

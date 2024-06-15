@@ -47,12 +47,12 @@ export class VolumeControllerProcess extends Process {
             volume: SessionController.getMasterVolume()
         };
 
-        this.notifyObservers('master-update', masterInfo);
+        this.sendToRenderer('master-update', masterInfo);
 
 
-        const [sessions, soloedSession] = SessionController.getSessions();
-        this.notifyObservers("vol-sessions", sessions);
-        this.notifyObservers("soloed-track", soloedSession);
+        const [sessions, soloedSession]: [Session[], Session] = SessionController.getSessions();
+        this.sendToRenderer("vol-sessions", sessions);
+        this.sendToRenderer("soloed-track", soloedSession);
 
         this.refreshTimeout = setTimeout(() => this.updateSessions(), VolumeControllerProcess.VOLUME_REFRESH_MS);
 
@@ -72,7 +72,7 @@ export class VolumeControllerProcess extends Process {
 
 
     public refreshSettings(): void {
-        this.notifyObservers("session-pid-visibility-modified", this.getSettings().getSettingByName("Show Session PID").getValue());
+        this.sendToRenderer("session-pid-visibility-modified", this.getSettings().getSetting("Show Session PID").getValue());
     }
 
     public stop(): void {
@@ -80,7 +80,7 @@ export class VolumeControllerProcess extends Process {
     }
 
 
-    public receiveIPCEvent(eventType: string, data: any[]): void {
+    public handleEvent(eventType: string, data: any[]): void {
         switch (eventType) {
             case "init": {
                 this.initialize();

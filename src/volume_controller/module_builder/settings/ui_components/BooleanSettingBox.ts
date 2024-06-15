@@ -1,6 +1,12 @@
 import { Setting } from "../../Setting";
 import { ChangeEvent, InputElement, SettingBox } from "../../SettingBox";
 
+
+/**
+ *  Boolean setting box. Will render as a toggle switch. 
+ * 
+ *  @author aarontburn
+ */
 export class BooleanSettingBox extends SettingBox<boolean> {
     private parentSetting: Setting<boolean> = this.getSetting();
 
@@ -8,7 +14,7 @@ export class BooleanSettingBox extends SettingBox<boolean> {
         return `
             <div class="left-component">
                 <label class="switch">
-                    <input type="checkbox" id="${this.parentSetting.getId()}" ${this.parentSetting.getValue() ? 'checked' : ''}>
+                    <input type="checkbox" id="${this.parentSetting.getID()}" ${this.parentSetting.getValue() ? 'checked' : ''}>
                     <span class="slider round"></span>
                 </label>   
             </div> 
@@ -16,11 +22,11 @@ export class BooleanSettingBox extends SettingBox<boolean> {
     }
 
     public getInputIdAndType(): InputElement[] {
-        return [{ id: this.parentSetting.getId(), inputType: "checkbox", attribute: 'checked' }];
+        return [{ id: this.parentSetting.getID(), inputType: "checkbox" }];
     }
 
     public onChange(newValue: any): ChangeEvent[] {
-        return [{id: this.parentSetting.getId(), attribute: 'checked', value: newValue}]
+        return [{id: this.parentSetting.getID(), attribute: 'checked', value: newValue}]
     }
 
     public getStyle(): string {
