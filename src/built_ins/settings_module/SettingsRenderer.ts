@@ -7,13 +7,13 @@
         buildVersion: number,
         platforms: string[]
     }
-    
+
     interface InputElement {
         id: string,
         inputType: string,
         returnValue?: any
     }
-    
+
     interface ChangeEvent {
         id: string,
         attribute: string,
@@ -47,10 +47,7 @@
                 for (const group of event) {
                     const element: any = document.getElementById(group.id);
                     element[group.attribute] = group.value
-
                 }
-
-
                 break;
             }
             case "refresh-settings": {
@@ -119,7 +116,8 @@
         ['color', 'value'],
         ['date', 'value'],
         ['range', 'value'],
-        ['select', 'value']
+        ['select', 'value'],
+        ['click', 'value'],
     ]);
 
     const keyBlacklist: string[] = [
@@ -147,11 +145,8 @@
                     inner.push(`<p><span>${toSentenceCase(key)}: </span><a href=${value}>${value}</a><p/>`);
                     continue;
                 }
-
-
                 inner.push(`<p><span>${toSentenceCase(key)}:</span> ${value}</p>`);
             }
-
             return inner.reduce((acc, html) => acc += html + "\n", '');
         }
 
@@ -173,6 +168,17 @@
         }
 
         tab.settings.forEach((settingInfo: any) => {
+            if (typeof settingInfo === 'string') {
+                const headerHTML: string = `
+                    <div class='section'>
+                        <p>${settingInfo}</p>
+                    </div>
+
+                `
+                settingsList.insertAdjacentHTML('beforeend', headerHTML);
+                return;
+            }
+
             const settingId: string = settingInfo.settingId;
             const inputTypeAndId: InputElement[] = settingInfo.inputTypeAndId;
             const html: string = settingInfo.ui;
@@ -215,6 +221,13 @@
                 const element: HTMLElement = document.getElementById(id);
 
                 switch (inputType) {
+                    case 'click': {
+                        element.addEventListener('click', () => {
+                            sendToProcess("setting-modified", id, returnValue ? returnValue : (element as any)[attribute]);
+                        })
+                        break;
+                    }
+
                     case 'number':
                     case 'text': {
                         element.addEventListener('keyup', (event: KeyboardEvent) => {

@@ -83,7 +83,7 @@ export class ChoiceSetting extends Setting<string> {
         return new Set(this.options.keys());
     }
 
-    public validateInput(input: any): string {
+    public _validateInput(input: any): string {
         const s: string = input.toString();
 
         if (!this.options.has(s)) {

@@ -15,7 +15,7 @@ export class HexColorSetting extends Setting<string> {
     }
 
 
-    public validateInput(input: any): string | null {
+    public _validateInput(input: any): string | null {
         if (input == null) {
             return null;
         }

@@ -60,9 +60,10 @@ export class VolumeControllerProcess extends Process {
 
 
 
-    public registerSettings(): Setting<unknown>[] {
+    public registerSettings(): (Setting<unknown> | string)[] {
         return [
             new BooleanSetting(this)
+                .setAccessID('show_pid')
                 .setName("Show Session PID")
                 .setDescription("Displays the process ID of the session.")
                 .setDefault(false)
@@ -71,8 +72,10 @@ export class VolumeControllerProcess extends Process {
     }
 
 
-    public refreshSettings(): void {
-        this.sendToRenderer("session-pid-visibility-modified", this.getSettings().getSetting("Show Session PID").getValue());
+    public refreshSettings(modifiedSetting?: Setting<unknown>): void {
+        if (modifiedSetting?.getAccessID() === 'show_pid') {
+            this.sendToRenderer("session-pid-visibility-modified", this.getSettings().getSetting("show_pid").getValue());
+        }
     }
 
     public stop(): void {

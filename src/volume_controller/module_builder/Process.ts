@@ -7,10 +7,10 @@ import { Setting } from "./Setting";
 export interface ModuleInfo {
     moduleName: string,
     author: string,
-    version: string,
+    version?: string,
     description: string,
-    buildVersion: number,
-    platforms: string[],
+    buildVersion?: number,
+    platforms?: string[],
     link?: string
 }
 
@@ -34,14 +34,14 @@ export abstract class Process implements IPCSource {
      *  Object to store this module's settings.
      *  This should not be directly accessed.
      */
-    public readonly moduleSettings = new ModuleSettings(this);
+    public readonly _moduleSettings = new ModuleSettings(this);
 
     /**
      *  @private 
      * 
      *  IPC callback function.
      */
-    public readonly ipcCallback: IPCCallback;
+    public readonly _ipcCallback: IPCCallback;
 
     /**
      *  @private 
@@ -49,7 +49,7 @@ export abstract class Process implements IPCSource {
      * 
      *  Ths name of this module.
      */
-    public readonly moduleName: string;
+    public readonly _moduleName: string;
 
     /**
      *  @private
@@ -59,7 +59,7 @@ export abstract class Process implements IPCSource {
      *  The information about this module.
      *
      */
-    public moduleInfo: ModuleInfo;
+    public _moduleInfo: ModuleInfo;
 
     /**
      *  @private
@@ -67,7 +67,7 @@ export abstract class Process implements IPCSource {
      * 
      *  Boolean indicating if this module has been initialized.
      */
-    public hasBeenInit: boolean = false;
+    public _hasBeenInit: boolean = false;
 
     /**
      *  @private
@@ -75,7 +75,7 @@ export abstract class Process implements IPCSource {
      * 
      *  The path to the HTML.
      */
-    public htmlPath: string;
+    public _htmlPath: string;
 
     /**
      *  Entry point.
@@ -85,11 +85,11 @@ export abstract class Process implements IPCSource {
      *  @param ipcCallback  The IPC callback function.
      */
     public constructor(moduleName: string, htmlPath: string, ipcCallback: IPCCallback) {
-        this.moduleName = moduleName;
-        this.htmlPath = htmlPath;
-        this.ipcCallback = ipcCallback;
+        this._moduleName = moduleName;
+        this._htmlPath = htmlPath;
+        this._ipcCallback = ipcCallback;
 
-        this.moduleSettings.addSettings(this.registerSettings());
+        this._moduleSettings.addSettings(this.registerSettings());
     }
 
     /**
@@ -97,7 +97,7 @@ export abstract class Process implements IPCSource {
      *      returns the name of the module, in lowercase. 
      */
     public getIPCSource(): string {
-        return this.moduleName.toLowerCase();
+        return this._moduleName.toLowerCase();
     }
 
 
@@ -105,28 +105,28 @@ export abstract class Process implements IPCSource {
      *  @returns the name of the module.
      */
     public getName(): string {
-        return this.moduleName;
+        return this._moduleName;
     }
 
     /**
      *  @returns the settings associated with this module. 
      */
     public getSettings(): ModuleSettings {
-        return this.moduleSettings;
+        return this._moduleSettings;
     }
 
     /**
      *  @returns the name of the settings file associated with this module.
      */
     public getSettingsFileName(): string {
-        return this.moduleName.toLowerCase() + "_settings.json";
+        return this._moduleName.toLowerCase() + "_settings.json";
     }
 
     /**
      *  @returns true if @see initialize() has been called, false otherwise.
      */
     public isInitialized(): boolean {
-        return this.hasBeenInit;
+        return this._hasBeenInit;
     }
 
     /**
@@ -134,10 +134,10 @@ export abstract class Process implements IPCSource {
      *  Should be overridden and treated as the entry point to the module.
      * 
      *  Child classes MUST do super.initialize() to properly
-     *      set @see hasBeenInit, if the module depends on it.
+     *      set @see _hasBeenInit, if the module depends on it.
      */
     public initialize(): void {
-        this.hasBeenInit = true;
+        this._hasBeenInit = true;
         // Override this, and do a super.initialize() after initializing model.
     }
 
@@ -146,7 +146,7 @@ export abstract class Process implements IPCSource {
      *  @see ModuleInfo
      */
     public getModuleInfo(): ModuleInfo {
-        return this.moduleInfo;
+        return this._moduleInfo;
     }
 
     /**
@@ -157,16 +157,18 @@ export abstract class Process implements IPCSource {
      *  @param moduleInfo The module info.
      */
     public setModuleInfo(moduleInfo: ModuleInfo) {
-        if (this.moduleInfo !== undefined) {
-            throw new Error("Attempted to reassign module info for " + this.moduleName);
+        if (this._moduleInfo !== undefined) {
+            throw new Error("Attempted to reassign module info for " + this._moduleName);
         }
-        this.moduleInfo = moduleInfo;
+        this._moduleInfo = moduleInfo;
     }
 
     /**
      *  Abstract function to register settings for this module.
+     * 
+     *  This should not be called externally.
      */
-    public abstract registerSettings(): Setting<unknown>[];
+    public abstract registerSettings(): (Setting<unknown> | string)[];
 
 
     /**
@@ -175,7 +177,20 @@ export abstract class Process implements IPCSource {
      * 
      *  For an example on how to use this, see {@link HomeProcess}
      */
-    public abstract refreshSettings(): void;
+    public abstract refreshSettings(modifiedSetting?: Setting<unknown>): void;
+
+
+    /**
+     *  Refreshes all settings by passing them into {@link refreshSettings}
+     * 
+     *  If the implementation of your {@link refreshSettings} refreshes ALL settings,
+     *      this may result in many frontend updates. Use cautiously.
+     */
+    public refreshAllSettings(): void {
+        for (const setting of this.getSettings().getSettings()) {
+            this.refreshSettings(setting);
+        }
+    }
 
     /**
      *  @private
@@ -201,14 +216,14 @@ export abstract class Process implements IPCSource {
      *  Lifecycle function that is called before the application exits.
      */
     public stop(): void {
-        // Do nothing by default
+        // Do nothing by default.
     }
 
     /**
      *  @returns the path to the HTML file associated with this module. 
      */
     public getHTMLPath(): string {
-        return this.htmlPath;
+        return this._htmlPath;
     }
 
 
@@ -216,7 +231,7 @@ export abstract class Process implements IPCSource {
      *  @returns a string representation of this module. Currently, just returns the name.
      */
     public toString(): string {
-        return this.moduleName;
+        return this._moduleName;
     }
 
     /**
@@ -236,7 +251,7 @@ export abstract class Process implements IPCSource {
      *  @see https://www.electronjs.org/docs/latest/tutorial/ipc#object-serialization
      */
     public sendToRenderer(eventType: string, ...data: any): void {
-        this.ipcCallback.notifyRenderer(this, eventType, ...data);
+        this._ipcCallback.notifyRenderer(this, eventType, ...data);
     }
 
 

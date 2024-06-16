@@ -39,13 +39,15 @@ export abstract class Setting<T> {
 
 
     /**
+     * @private
+     * 
      * Checks if the required fields are set before data can be accessed or set.
      * 
      * The required fields are {@link name} and {@link defaultValue}.
      *
      * @throws Error if the required fields were NOT set.
      */
-    public checkRequiredFields(): void {
+    public _checkRequiredFields(): void {
         if (this.name === undefined
             || this.defaultValue === undefined) {
 
@@ -87,6 +89,9 @@ export abstract class Setting<T> {
      *  @returns itself.
      */
     public setAccessID(id: string): Setting<T> {
+        if (this.accessID !== undefined) {
+            throw new Error("Cannot reassign access ID for " + this.name);
+        }
         this.accessID = id;
         return this;
     }
@@ -101,11 +106,11 @@ export abstract class Setting<T> {
 
 
     /**
-     * Sets the default value of this setting. This is a required field.
+     *  Sets the default value of this setting. This is a required field.
      *
-     * @param defaultValue The default value of the setting.
-     * @return itself.
-     * @throws {Error} if the default value of the setting is already set.
+     *  @param defaultValue The default value of the setting.
+     *  @return itself.
+     *  @throws {Error} if the default value of the setting is already set.
      */
     public setDefault(defaultValue: T): Setting<T> {
         if (this.defaultValue !== undefined) {
@@ -159,7 +164,7 @@ export abstract class Setting<T> {
      *                               appropriate fields were set.
      */
     public getValue(): T {
-        this.checkRequiredFields();
+        this._checkRequiredFields();
         return this.currentValue;
     }
 
@@ -167,22 +172,22 @@ export abstract class Setting<T> {
     /**
      *  Changes the value of this setting.
      * 
-     *  It passes the value into @see parseInput, which returns either
+     *  It passes the value into @see _parseInput, which returns either
      *      a value of type that matches this settings type, or null indicating that it could
      *      not properly parse the input.
      * 
      *  If the input is null, the current value will remain the same. Otherwise, it will update
      *      its value to the new one.
      * 
-     * @param theValue The new value, not null.
+     * @param value The new value, not null.
      * @throws Error if an attempt was made to set the value before all
      *                               appropriate fields were set.
      */
-    public setValue(theValue: any): void {
-        this.checkRequiredFields();
+    public setValue(value: any): void {
+        this._checkRequiredFields();
 
-        const value: T = this.parseInput(theValue);
-        this.currentValue = value != null ? value : this.currentValue;
+        const parsedValue: T = this._parseInput(value);
+        this.currentValue = parsedValue != null ? parsedValue : this.currentValue;
     }
 
 
@@ -193,17 +198,17 @@ export abstract class Setting<T> {
      * 
      *  If an {@link inputValidator} is specified, it will use it to parse the input.
      * 
-     *  Otherwise, it will use {@link validateInput} to parse the input.
+     *  Otherwise, it will use {@link _validateInput} to parse the input.
      *
      *  @param input The input to parse.
      *  @return A {@link T} type valid input, or null if the input couldn't be parsed.
      */
-    public parseInput(input: any): T {
+    public _parseInput(input: any): T {
         if (this.inputValidator !== undefined) {
             return this.inputValidator(input);
         }
 
-        return this.validateInput(input);
+        return this._validateInput(input);
     }
 
 
@@ -219,7 +224,7 @@ export abstract class Setting<T> {
      *  @param input The input to parse.
      *  @return A {@link T} valid input, or null if the input could not be parsed.
      */
-    public abstract validateInput(input: any): T | null;
+    public abstract _validateInput(input: any): T | null;
 
 
     /**
@@ -232,10 +237,10 @@ export abstract class Setting<T> {
     /**
      *  Sets the input validator for this setting.
      * 
-     *  The {@link parseInput} function will use the specified input validator instead of
-     *      the {@link validateInput} to parse input.
+     *  The {@link _parseInput} function will use the specified input validator instead of
+     *      the {@link _validateInput} to parse input.
      *
-     *  @param inputValidator The input validator to use over the default {@link parseInput}.
+     *  @param inputValidator The input validator to use over the default {@link _parseInput}.
      *  @return itself.
      *  @throws {Error} if the input validator is already defined.
      */
@@ -276,9 +281,4 @@ export abstract class Setting<T> {
     }
 
 
-}
-
-
-export interface InputValidator<T> {
-    parseInput(theInput: any): T;
 }

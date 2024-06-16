@@ -18,7 +18,7 @@ export class BooleanSetting extends Setting<boolean> {
     }
 
 
-    public validateInput(input: any): boolean | null {
+    public _validateInput(input: any): boolean | null {
         if (input == null) {
             return null;
         }

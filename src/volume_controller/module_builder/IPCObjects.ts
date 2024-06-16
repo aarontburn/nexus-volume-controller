@@ -10,4 +10,6 @@ export interface IPCSource {
  */
 export interface IPCCallback {
     notifyRenderer(target: IPCSource, eventType: string, ...data: any[]): void;
+
+    
 }

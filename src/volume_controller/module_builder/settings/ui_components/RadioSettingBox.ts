@@ -6,7 +6,7 @@ import { ChoiceSetting } from "../types/ChoiceSetting";
 /**
  *  Setting UI to handle selection input. The user will be presented with multiple options,
  * 
- *  @author
+ *  @author aarontburn
  */
 export class RadioSettingBox extends SettingBox<string> {
 

@@ -10,7 +10,7 @@ import { Setting } from "./Setting";
  */
 export class ModuleSettings {
     public readonly settingsMap: Map<string, Setting<unknown>> = new Map();
-    public readonly displaySettingMap: Map<string, Setting<unknown>> = new Map()
+    public readonly settingsDisplay: (Setting<unknown> | string)[] = [];
     public readonly parentModule: Process;
     public settingsName: string;
 
@@ -37,8 +37,20 @@ export class ModuleSettings {
     /**
      *  @returns An array of all the settings.
      */
-    public getSettingsList(): Setting<unknown>[] {
-        return Array.from(this.displaySettingMap.values());
+    public getSettings(): Setting<unknown>[] {
+        const settingList: Setting<unknown>[] = [];
+
+        for (const s of this.settingsDisplay) {
+            if (s instanceof Setting) {
+                settingList.push(s);
+            }
+        }
+
+        return settingList;
+    }
+
+    public getSettingsAndHeaders(): (Setting<unknown> | string)[] {
+        return this.settingsDisplay;
     }
 
     /**
@@ -60,10 +72,14 @@ export class ModuleSettings {
      * 
      *  @param setting The setting to add.
      */
-    public addSetting(setting: Setting<unknown>): void {
-        this.displaySettingMap.set(setting.getName(), setting);
+    public addSetting(s: Setting<unknown> | string): void {
+        this.settingsDisplay.push(s);
+        if (typeof s === 'string') {
+            return;
+        }
 
 
+        const setting = s as Setting<unknown>;
         const settingID: string = setting.getAccessID();
         const settingName: string = setting.getName();
 
@@ -81,8 +97,8 @@ export class ModuleSettings {
      * 
      *  @param settings The settings to add. 
      */
-    public addSettings(settings: Setting<unknown>[]): void {
-        settings.forEach((setting) => {
+    public addSettings(settings: (Setting<unknown> | string)[]): void {
+        settings.forEach((setting: Setting<unknown> | string) => {
             this.addSetting(setting);
         });
     }

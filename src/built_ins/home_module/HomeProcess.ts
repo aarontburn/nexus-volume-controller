@@ -10,7 +10,7 @@ import { StringSetting } from "../../volume_controller/module_builder/settings/t
 export class HomeProcess extends Process {
 	public static MODULE_NAME: string = "Home";
 
-	private static HTML_PATH: string = path.join(__dirname, "./HomeHTML.html").replace("dist", 'src');
+	private static HTML_PATH: string = path.join(__dirname, "./HomeHTML.html").replace('dist', 'src');
 
 
 	private static LOCALE: string = "en-US";
@@ -82,8 +82,9 @@ export class HomeProcess extends Process {
 		}
 	}
 
-	public registerSettings(): Setting<unknown>[] {
+	public registerSettings(): (Setting<unknown> | string)[] {
 		return [
+			'Date/Time',
 			new NumberSetting(this)
 				.setMin(0)
 				.setName("Full Date Font Size (1)")
@@ -134,21 +135,21 @@ export class HomeProcess extends Process {
 	}
 
 
-	public refreshSettings(): void {
-		const sizes: object = {
-			fullDate: this.getSettings().getSetting('full_date_fs').getValue(),
-			abbrDate: this.getSettings().getSetting('abbr_date_fs').getValue(),
-			standardTime: this.getSettings().getSetting('standard_time_fs').getValue(),
-			militaryTime: this.getSettings().getSetting('military_time_fs').getValue()
+	private static DATE_TIME_IDS: string[] = ['full_date_fs', 'abbr_date_fs', 'standard_time_fs', 'military_time_fs'];	
+	
+	public refreshSettings(modifiedSetting?: Setting<unknown>): void {
+		if (HomeProcess.DATE_TIME_IDS.includes(modifiedSetting?.getAccessID())) {
+			const sizes: object = {
+				fullDate: this.getSettings().getSetting('full_date_fs').getValue(),
+				abbrDate: this.getSettings().getSetting('abbr_date_fs').getValue(),
+				standardTime: this.getSettings().getSetting('standard_time_fs').getValue(),
+				militaryTime: this.getSettings().getSetting('military_time_fs').getValue()
+			}
+			this.sendToRenderer('font-sizes', sizes);
+		} else if (modifiedSetting?.getAccessID() === 'display_order') {
+			const order: string = this.getSettings().getSetting("display_order").getValue() as string
+			this.sendToRenderer('display-order', order);
 		}
-
-
-		const order: string = this.getSettings().getSetting("display_order").getValue() as string
-
-
-		this.sendToRenderer('font-sizes', sizes);
-		this.sendToRenderer('display-order', order);
-
 	}
 
 	public handleEvent(eventType: string, data: any[]): void {

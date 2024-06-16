@@ -2,6 +2,8 @@ import { Setting } from "../../Setting";
 import { Process } from "../../Process";
 import { SettingBox } from "../../SettingBox";
 import { NumberSettingBox } from "../ui_components/NumberSettingBox";
+import { RangeSettingBox } from "../ui_components/RangeSettingBox";
+import { IncrementableNumberSettingBox } from "../ui_components/IncrementableNumberSettingBox";
 
 /**
  *  Setting to receive number input.
@@ -23,10 +25,30 @@ export class NumberSetting extends Setting<number> {
     private max: number = undefined;
 
 
-    
+
+    private step: number = 1;
+
+    private useSlider: boolean = false;
+
+    private useIncrement: boolean = false;
+
+
     public constructor(module: Process, defer: boolean = false) {
         super(module, defer);
     }
+
+    public useRangeSliderUI(): NumberSetting {
+        this.useIncrement = false;
+        this.useSlider = true;
+        return this;
+    }
+
+    public useIncrementableUI(): NumberSetting {
+        this.useSlider = false;
+        this.useIncrement = true;
+        return this;
+    }
+
 
     /**
      *  Sets a minimum value. If the user inputs a number less than
@@ -77,8 +99,17 @@ export class NumberSetting extends Setting<number> {
 
         this.min = min;
         this.max = max;
+        super.reInitUI();
         return this;
     }
+
+    public setStep(step: number): NumberSetting {
+        this.step = step;
+        super.reInitUI()
+        return this;
+    }
+
+
 
 
     /**
@@ -97,21 +128,29 @@ export class NumberSetting extends Setting<number> {
     }
 
 
-    public validateInput(theInput: any): number | null {
+    public _validateInput(input: any): number | null {
         let value: number;
 
-        if (typeof theInput === 'number') {
-            value = Number(theInput);
+        if (input === 'increase') {
+            value = (this.getValue() as number) + this.step
+        } else if (input === 'decrease') {
+            value = (this.getValue() as number) - this.step;
+        } else if (typeof input === 'number') {
+            value = Number(input);
+        } else {
+            try {
+                const parsedValue: number = parseFloat(String(input));
+                if (!isNaN(parsedValue)) {
+                    value = Number(parsedValue)
+                } else {
+                    return null;
+                }
+            } catch (err) {
+                return null; // could not 
+            }
         }
 
-        try {
-            const parsedValue: number = parseFloat(String(theInput));
-            if (!isNaN(parsedValue)) {
-                value = Number(parsedValue)
-            }
-        } catch (err) {
-            return null; // could not 
-        }
+
 
 
         const roundedValue = (value: number) => Number(value.toFixed(1));
@@ -134,6 +173,21 @@ export class NumberSetting extends Setting<number> {
 
 
     public setUIComponent(): SettingBox<number> {
+        if (this.useSlider) {
+            const slider: RangeSettingBox = new RangeSettingBox(this);
+            slider.setInputRange(this.min, this.max);
+            slider.setInputStep(this.step);
+            return slider;
+        } else if (this.useIncrement) {
+            const box: IncrementableNumberSettingBox = new IncrementableNumberSettingBox(this);
+            box.setInputRange(this.min, this.max);
+            box.setInputStep(this.step);
+            return box
+
+
+        }
+
+
         return new NumberSettingBox(this);
 
     }

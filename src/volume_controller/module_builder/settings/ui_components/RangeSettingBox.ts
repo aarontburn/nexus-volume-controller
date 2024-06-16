@@ -18,7 +18,6 @@ export class RangeSettingBox extends NumberSettingBox {
     }
 
     public createRight(): string {
-
         return `
             <div class="right-component">
                 <div style="display: flex; flex-wrap: wrap">
@@ -34,7 +33,7 @@ export class RangeSettingBox extends NumberSettingBox {
         `;
     }
 
-    public setInputRange(min: number, max: number): void {
+    public setInputRange(min: number = 0, max: number = 100): void {
         if (min > max) {
             throw new Error(`Attempted to set a greater min than max. Min: ${min} | Max: ${max}`);
         }
