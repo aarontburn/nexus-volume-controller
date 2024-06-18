@@ -105,53 +105,47 @@ interface Session {
 
 
 
-
     dragElement(document.getElementById("separator"));
-
-    function dragElement(element: HTMLElement): void {
-        let md: {
-            event: MouseEvent,
-            offsetLeft: number,
-            offsetTop: number,
-            firstWidth: number,
-            secondWidth: number
-        };
+    function dragElement(element: HTMLElement) {
+        let md: any;
         const left: HTMLElement = document.getElementById("left");
         const right: HTMLElement = document.getElementById("right");
+        const container: HTMLElement = document.getElementById("splitter");
 
         element.onmousedown = (e: MouseEvent) => {
             md = {
-                event: e,
-                offsetLeft: element.offsetLeft,
-                offsetTop: element.offsetTop,
-                firstWidth: left.offsetWidth,
-                secondWidth: right.offsetWidth
+                e,
+                leftWidth: left.offsetWidth,
+                rightWidth: right.offsetWidth,
+                containerWidth: container.offsetWidth
             };
 
-            document.onmousemove = (e: MouseEvent) => {
-                let delta: { x: number, y: number } = {
-                    x: e.clientX - md.event.clientX,
-                    y: e.clientY - md.event.clientY
-                };
+            document.onmousemove = (e) => {
+                const deltaX: number = e.clientX - md.e.clientX
 
-                delta.x = Math.min(Math.max(delta.x, -md.firstWidth), md.secondWidth);
+                let newLeftWidth = md.leftWidth + deltaX;
+                let newRightWidth = md.rightWidth - deltaX;
 
-                element.style.left = md.offsetLeft + delta.x + "px";
-                left.style.width = (md.firstWidth + delta.x) + "px";
-                right.style.width = (md.secondWidth - delta.x) + "px";
+                if (newLeftWidth < 0) {
+                    newLeftWidth = 0;
+                }
+
+                if (newRightWidth < 0) {
+                    newRightWidth = 0;
+                }
+
+                const leftPercent = (newLeftWidth / md.containerWidth) * 100;
+                const rightPercent = (newRightWidth / md.containerWidth) * 100;
+
+                left.style.width = leftPercent + "%";
+                right.style.width = rightPercent + "%";
             };
-            document.onmouseup = () => document.onmousemove = document.onmouseup = null;
 
+            document.onmouseup = () => {
+                document.onmousemove = document.onmouseup = null;
+            };
         };
     }
-
-
-
-
-
-
-
-
 
 
     class SessionBox {
