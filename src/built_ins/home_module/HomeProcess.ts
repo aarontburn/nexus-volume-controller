@@ -8,28 +8,30 @@ import { StringSetting } from "../../volume_controller/module_builder/settings/t
 
 
 export class HomeProcess extends Process {
-	public static MODULE_NAME: string = "Home";
+	public static readonly MODULE_NAME: string = "Home";
+	public static readonly MODULE_ID: string = 'built_ins.Home';
 
-	private static HTML_PATH: string = path.join(__dirname, "./HomeHTML.html").replace('dist', 'src');
+	private static readonly HTML_PATH: string = path.join(__dirname, "./HomeHTML.html").replace('dist', 'src');
 
 
-	private static LOCALE: string = "en-US";
-	private static STANDARD_TIME_FORMAT: Intl.DateTimeFormatOptions =
+	private static readonly LOCALE: string = "en-US";
+	private static readonly STANDARD_TIME_FORMAT: Intl.DateTimeFormatOptions =
 		{ hour: "numeric", minute: "numeric", second: "numeric", hour12: true, };
 
-	private static MILITARY_TIME_FORMAT: Intl.DateTimeFormatOptions =
+	private static readonly MILITARY_TIME_FORMAT: Intl.DateTimeFormatOptions =
 		{ hour: "numeric", minute: "numeric", second: "numeric", hour12: false, };
 
-	private static FULL_DATE_FORMAT: Intl.DateTimeFormatOptions =
+	private static readonly FULL_DATE_FORMAT: Intl.DateTimeFormatOptions =
 		{ weekday: "long", month: "long", day: "numeric", year: "numeric", };
 
-	private static ABBREVIATED_DATE_FORMAT: Intl.DateTimeFormatOptions =
+	private static readonly ABBREVIATED_DATE_FORMAT: Intl.DateTimeFormatOptions =
 		{ month: "numeric", day: "numeric", year: "numeric", };
 
 	private clockTimeout: NodeJS.Timeout;
 
 	public constructor(ipcCallback: IPCCallback) {
 		super(
+			HomeProcess.MODULE_ID,
 			HomeProcess.MODULE_NAME,
 			HomeProcess.HTML_PATH,
 			ipcCallback);
@@ -59,7 +61,7 @@ export class HomeProcess extends Process {
 		clearTimeout(this.clockTimeout);
 	}
 
-	private createSpan(text: string) {
+	private createSpan(text: string): string {
 		return `<span style='color: var(--accent-color)'>${text}</span>`;
 	}
 
@@ -86,6 +88,7 @@ export class HomeProcess extends Process {
 		return [
 			'Date/Time',
 			new NumberSetting(this)
+				.setStep(5)
 				.setMin(0)
 				.setName("Full Date Font Size (1)")
 				.setDescription(
@@ -95,6 +98,7 @@ export class HomeProcess extends Process {
 				.setDefault(40.0),
 
 			new NumberSetting(this)
+				.setStep(5)
 				.setMin(0)
 				.setName("Abbreviated Date Font Size (2)")
 				.setDescription(
@@ -104,6 +108,7 @@ export class HomeProcess extends Process {
 				.setDefault(30.0),
 
 			new NumberSetting(this)
+				.setStep(5)
 				.setMin(0)
 				.setName("Standard Time Font Size (3)")
 				.setDescription(
@@ -113,6 +118,7 @@ export class HomeProcess extends Process {
 				.setDefault(90.0),
 
 			new NumberSetting(this)
+				.setStep(5)
 				.setMin(0)
 				.setName("Military Time Font Size (4)")
 				.setDescription(
@@ -129,14 +135,14 @@ export class HomeProcess extends Process {
 				.setValidator((o) => {
 					const s: string = o.toString();
 					return s === "" || s.match("^(?!.*(\\d).*\\1)[1-4\\s]+$") ? s : null;
-				})
-
+				}),
 		];
 	}
 
 
-	private static DATE_TIME_IDS: string[] = ['full_date_fs', 'abbr_date_fs', 'standard_time_fs', 'military_time_fs'];	
-	
+	private static DATE_TIME_IDS: string[] = ['full_date_fs', 'abbr_date_fs', 'standard_time_fs', 'military_time_fs'];
+
+
 	public refreshSettings(modifiedSetting?: Setting<unknown>): void {
 		if (HomeProcess.DATE_TIME_IDS.includes(modifiedSetting?.getAccessID())) {
 			const sizes: object = {

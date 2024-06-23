@@ -10,13 +10,13 @@ import { StringSettingBox } from "../ui_components/StringSettingBox";
  */
 export class StringSetting extends Setting<string> {
 
-    public constructor(theModule: Process) {
-        super(theModule);
+    public constructor(module: Process) {
+        super(module);
     }
 
 
-    public _validateInput(theInput: any): string | null {
-        const s: string = theInput.toString();
+    public validateInput(input: any): string | null {
+        const s: string = input.toString();
         return s == "" ? null : s;
 
     }

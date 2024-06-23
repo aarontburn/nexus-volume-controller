@@ -1,5 +1,5 @@
 import * as path from "path";
-import { BrowserWindow, shell } from 'electron';
+import { BrowserWindow, OpenDialogOptions, app, dialog, shell } from 'electron';
 import { IPCCallback } from "../../volume_controller/module_builder/IPCObjects";
 import { ModuleSettings } from "../../volume_controller/module_builder/ModuleSettings";
 import { Process } from "../../volume_controller/module_builder/Process";
@@ -9,16 +9,21 @@ import { StorageHandler } from "../../volume_controller/module_builder/StorageHa
 import { BooleanSetting } from "../../volume_controller/module_builder/settings/types/BooleanSetting";
 import { HexColorSetting } from "../../volume_controller/module_builder/settings/types/HexColorSetting";
 import { NumberSetting } from "../../volume_controller/module_builder/settings/types/NumberSetting";
+import { ModuleCompiler } from "../../ModuleCompiler";
+
 
 export class SettingsProcess extends Process {
-    public static MODULE_NAME: string = "Settings";
-    private static HTML_PATH: string = path.join(__dirname, "./SettingsHTML.html").replace('dist', 'src');
+    public static readonly MODULE_NAME: string = "Settings";
+    public static readonly MODULE_ID: string = 'built_ins.Settings';
 
-    private moduleSettingsList: ModuleSettings[] = [];
-    private window: BrowserWindow;
+    private static readonly HTML_PATH: string = path.join(__dirname, "./SettingsHTML.html").replace('dist', 'src');;
+
+    private readonly moduleSettingsList: ModuleSettings[] = [];
+    private readonly window: BrowserWindow;
 
     public constructor(ipcCallback: IPCCallback, window: BrowserWindow) {
         super(
+            SettingsProcess.MODULE_ID,
             SettingsProcess.MODULE_NAME,
             SettingsProcess.HTML_PATH,
             ipcCallback);
@@ -42,15 +47,20 @@ export class SettingsProcess extends Process {
                 .setDefault("#2290B5"),
 
             new NumberSetting(this)
-                .useIncrementableUI()
                 .setRange(25, 300)
                 .setStep(10)
                 .setName("Zoom Level")
                 .setDefault(100)
                 .setAccessID('zoom'),
+
+            "Developer",
+            new BooleanSetting(this)
+                .setName("Force Reload Modules at Launch")
+                .setDescription("Always recompile modules at launch. Will result in a slower boot.")
+                .setAccessID("force_reload")
+                .setDefault(false),
         ];
     }
-
 
     public refreshSettings(modifiedSetting?: Setting<unknown>): void {
         if (modifiedSetting?.getAccessID() === 'zoom') {
@@ -109,11 +119,45 @@ export class SettingsProcess extends Process {
 
     }
 
+    private importModuleArchive() {
+        const options: OpenDialogOptions = {
+            properties: ['openFile'],
+            filters: [{ name: 'Module Archive File', extensions: ['zip', 'tar'] }]
+        };
+
+        dialog.showOpenDialog(options).then(async (response) => {
+            if (response.canceled) {
+                return;
+            }
+            const filePath: string = response.filePaths[0];
+            const successful: boolean = await ModuleCompiler.importPluginArchive(filePath);
+
+            if (successful) {
+                this.sendToRenderer('import-success');
+                console.log("Successfully copied " + filePath + ". Restart required.");
+            } else {
+                this.sendToRenderer('import-error');
+                console.log("Error copying " + filePath + ".");
+            }
+
+        });
+    }
+
 
     public handleEvent(eventType: string, data: any[]): void {
         switch (eventType) {
             case "settings-init": {
                 this.initialize();
+                break;
+            }
+
+            case 'import-module': {
+                this.importModuleArchive();
+                break;
+            }
+            case 'restart-now': {
+                app.relaunch();
+                app.exit();
                 break;
             }
 

@@ -15,15 +15,15 @@ export class HexColorSetting extends Setting<string> {
     }
 
 
-    public _validateInput(input: any): string | null {
-        if (input == null) {
+    public validateInput(input: any): string | null {
+        if (input === null) {
             return null;
         }
 
-        const s: string = input.toString();
+        const s: string = (input.toString() as string).toUpperCase();
         return s.match("^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$") ? s : null;
-
     }
+    
     public setUIComponent(): SettingBox<string> {
         return new ColorSettingBox(this);
     }

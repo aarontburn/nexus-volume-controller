@@ -1,8 +1,10 @@
 (() => {
-    const PROCESS: string = "main-process";
-    const RENDERER: string = "main-renderer";
+    const MODULE_ID = 'built_ins.Main';
+    const sendToProcess = (eventType: string, ...data: any): void => {
+        window.ipc.send(MODULE_ID, eventType, ...data);
+    }
 
-    window.ipc.send(PROCESS, "renderer-init"); // let main know that renderer is booted
+    sendToProcess("renderer-init");
 
     const IFRAME_DEFAULT_STYLE: string = "height: 100%; width: 100%;";
 
@@ -24,17 +26,18 @@
     let selectedTab: HTMLElement = undefined;
 
 
-    window.ipc.on(RENDERER, (_, eventType: string, data: any) => {
+    window.ipc.on(MODULE_ID, (_, eventType: string, data: any) => {
         // data = data[0];
         switch (eventType) {
             case "load-modules": {
                 const moduleHtml: HTMLElement = document.getElementById("modules");
                 const headerHtml: HTMLElement = document.getElementById("header");
 
-                (data as Map<string, string>).forEach((moduleHtmlPath, moduleName) => {
+
+                for (const {moduleName, moduleID, htmlPath} of data) {
                     const moduleView: HTMLElement = document.createElement("iframe");
-                    moduleView.id = moduleName;
-                    moduleView.setAttribute("src", moduleHtmlPath);
+                    moduleView.id = moduleID;
+                    moduleView.setAttribute("src", htmlPath);
                     moduleView.setAttribute("style", IFRAME_DEFAULT_STYLE);
                     // moduleView.setAttribute("sandbox", SANDBOX_RESTRICTIONS)
                     moduleHtml.insertAdjacentElement("beforeend", moduleView);
@@ -56,10 +59,10 @@
                         selectedTab = headerButton;
                         selectedTab.setAttribute("style", "color: var(--accent-color);");
 
-                        window.ipc.send(PROCESS, "swap-modules", moduleName);
+                        sendToProcess("swap-modules", moduleID);
                     });
                     headerHtml.insertAdjacentElement("beforeend", headerButton);
-                });
+                }
                 break;
             }
             case "swap-modules": {
@@ -77,7 +80,6 @@
 
         document.getElementById(swapToLayoutId).setAttribute("style", IFRAME_DEFAULT_STYLE);
     }
-
 
 })()
 

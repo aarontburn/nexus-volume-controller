@@ -10,8 +10,8 @@ import { ChoiceSetting } from "../types/ChoiceSetting";
  */
 export class DropdownSettingBox extends SettingBox<string> {
 
-    public constructor(theSetting: Setting<string>) {
-        super(theSetting)
+    public constructor(setting: Setting<string>) {
+        super(setting)
     }
 
 

@@ -6,10 +6,10 @@ export interface IPCSource {
 }
 
 /**
- *  Interface to store the IPC callback function.
+ *  Interface to store any IPC callback functions.
  */
 export interface IPCCallback {
     notifyRenderer(target: IPCSource, eventType: string, ...data: any[]): void;
 
-    
+    requestExternalModule(source: IPCSource, targetModuleID: string, eventType: string, ...data: any[]): Promise<any>;
 }

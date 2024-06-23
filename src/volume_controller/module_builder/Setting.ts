@@ -10,7 +10,7 @@ export abstract class Setting<T> {
     public description: string;
     public accessID: string;
 
-    public inputValidator: (theInput: any) => T;
+    public inputValidator: (input: any) => T;
 
     public defaultValue: T;
     public currentValue: T;
@@ -198,7 +198,7 @@ export abstract class Setting<T> {
      * 
      *  If an {@link inputValidator} is specified, it will use it to parse the input.
      * 
-     *  Otherwise, it will use {@link _validateInput} to parse the input.
+     *  Otherwise, it will use {@link validateInput} to parse the input.
      *
      *  @param input The input to parse.
      *  @return A {@link T} type valid input, or null if the input couldn't be parsed.
@@ -208,7 +208,7 @@ export abstract class Setting<T> {
             return this.inputValidator(input);
         }
 
-        return this._validateInput(input);
+        return this.validateInput(input);
     }
 
 
@@ -224,7 +224,7 @@ export abstract class Setting<T> {
      *  @param input The input to parse.
      *  @return A {@link T} valid input, or null if the input could not be parsed.
      */
-    public abstract _validateInput(input: any): T | null;
+    public abstract validateInput(input: any): T | null;
 
 
     /**
@@ -238,13 +238,13 @@ export abstract class Setting<T> {
      *  Sets the input validator for this setting.
      * 
      *  The {@link _parseInput} function will use the specified input validator instead of
-     *      the {@link _validateInput} to parse input.
+     *      the {@link validateInput} to parse input.
      *
      *  @param inputValidator The input validator to use over the default {@link _parseInput}.
      *  @return itself.
      *  @throws {Error} if the input validator is already defined.
      */
-    public setValidator(inputValidator: (theInput: any) => T): Setting<T> {
+    public setValidator(inputValidator: (input: any) => T): Setting<T> {
         if (this.inputValidator !== undefined) {
             throw new Error("Cannot redefine input validator for " + this.name);
         }

@@ -75,7 +75,15 @@ export abstract class Process implements IPCSource {
      * 
      *  The path to the HTML.
      */
-    public _htmlPath: string;
+    public readonly _htmlPath: string;
+
+    /**
+     *  @private
+     *  @see getIPCSource
+     * 
+     *  The ID of this module.
+     */
+    public readonly _moduleID: string;
 
     /**
      *  Entry point.
@@ -84,7 +92,8 @@ export abstract class Process implements IPCSource {
      *  @param htmlPath     The path to the HTML frontend.
      *  @param ipcCallback  The IPC callback function.
      */
-    public constructor(moduleName: string, htmlPath: string, ipcCallback: IPCCallback) {
+    public constructor(moduleID: string, moduleName: string, htmlPath: string, ipcCallback: IPCCallback) {
+        this._moduleID = moduleID;
         this._moduleName = moduleName;
         this._htmlPath = htmlPath;
         this._ipcCallback = ipcCallback;
@@ -94,12 +103,11 @@ export abstract class Process implements IPCSource {
 
     /**
      *  @returns the name of the IPC source. By default,
-     *      returns the name of the module, in lowercase. 
+     *      returns the module ID. This should not be modified.
      */
     public getIPCSource(): string {
-        return this._moduleName.toLowerCase();
+        return this._moduleID;
     }
-
 
     /**
      *  @returns the name of the module.
@@ -240,7 +248,8 @@ export abstract class Process implements IPCSource {
      *  @param eventType The name of the event
      *  @param data The data sent from the renderer.
      */
-    public abstract handleEvent(eventType: string, data: any[]): void
+    public abstract handleEvent(eventType: string, ...data: any[]): void
+
 
 
     /**
@@ -254,6 +263,20 @@ export abstract class Process implements IPCSource {
         this._ipcCallback.notifyRenderer(this, eventType, ...data);
     }
 
+
+
+    
+    public async handleExternal(source: IPCSource, eventType: string, ...data: any[]): Promise<any> {
+        console.log(`[${this._moduleName}]: External module, '${source.getIPCSource()}' requested data.'`);
+        console.log(`\tWith event type of: ${eventType}`);
+        console.log(`\tAnd data:`);
+        console.log(data);
+        return null;
+    }
+
+    public async requestExternal(target: string, eventType: string, ...data: any[]): Promise<any> {
+        return this._ipcCallback.requestExternalModule(this, target, eventType, data);
+    } 
 
 
 }

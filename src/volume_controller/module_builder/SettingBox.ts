@@ -55,7 +55,6 @@ export interface ChangeEvent {
  *          @param id: The ID of the input element.
  *          @param attribute: The attribute to modify.
  *          @param value: The value to set the attribute to.
- *      
  * 
  */
 
@@ -65,8 +64,8 @@ export abstract class SettingBox<T> {
 
     public readonly setting: Setting<T>;
 
-    public constructor(theSetting: Setting<T>) {
-        this.setting = theSetting;
+    public constructor(setting: Setting<T>) {
+        this.setting = setting;
         this.resetID = 'reset-button_' + this.setting.getID()
     }
 

@@ -59,7 +59,7 @@ export class ModuleSettings {
      *  Under normal conditions, there are very few reasons to change this.
      * 
      *  @see getName
-     *  @param name 
+     *  @param name The name of the settings group.
      */
     public setName(name: string): void {
         this.settingsName = name;

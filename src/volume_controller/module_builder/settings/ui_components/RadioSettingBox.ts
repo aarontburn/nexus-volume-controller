@@ -12,8 +12,8 @@ export class RadioSettingBox extends SettingBox<string> {
 
     private readonly optionsIDMap: Map<string, string> = new Map();
 
-    public constructor(theSetting: Setting<string>) {
-        super(theSetting)
+    public constructor(setting: Setting<string>) {
+        super(setting);
 
         const options: Set<string> = (this.getSetting() as ChoiceSetting).getOptionNames();
         let i: number = 0;

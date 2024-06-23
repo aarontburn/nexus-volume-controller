@@ -18,7 +18,7 @@ export class BooleanSetting extends Setting<boolean> {
     }
 
 
-    public _validateInput(input: any): boolean | null {
+    public validateInput(input: any): boolean | null {
         if (input == null) {
             return null;
         }
@@ -27,11 +27,11 @@ export class BooleanSetting extends Setting<boolean> {
             return input;
         }
 
-        const s: string = input.toString().toLocaleLowerCase();
+        const s: string = input.toString().toLowerCase();
 
-        if (s == "true") {
+        if (s === "true") {
             return true;
-        } else if (s == "false") {
+        } else if (s === "false") {
             return false;
         }
         return null;

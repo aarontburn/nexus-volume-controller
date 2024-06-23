@@ -13,12 +13,10 @@ interface Session {
 
 (() => { // Wrapped in an anonymous function for scoping.
 
-    const MODULE_NAME = "Volume Controller"
-    const MODULE_PROCESS_NAME = MODULE_NAME.toLowerCase() + "-process";
-    const MODULE_RENDERER_NAME = MODULE_NAME.toLowerCase() + "-renderer"
+    const MODULE_ID = "aarontburn.Volume_Controller"
 
     const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);
+        window.parent.ipc.send(MODULE_ID, eventType, ...data);
     }
 
 
@@ -28,7 +26,7 @@ interface Session {
     const CONTROL_ACTIVE_CSS: string = 'session-option-active';
 
 
-    window.parent.ipc.on(MODULE_RENDERER_NAME, async (_, eventType: string, ...data: any[]) => {
+    window.parent.ipc.on(MODULE_ID, async (_, eventType: string, ...data: any[]) => {
         switch (eventType) {
             case 'master-update': {
                 updateMaster(data[0]);

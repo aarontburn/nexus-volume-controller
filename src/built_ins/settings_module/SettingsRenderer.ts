@@ -20,33 +20,45 @@
         value: any
     }
 
-    const MODULE_NAME = "Settings"
-    const MODULE_PROCESS_NAME = MODULE_NAME.toLowerCase() + "-process";
-    const MODULE_RENDERER_NAME = MODULE_NAME.toLowerCase() + "-renderer"
+    const MODULE_ID = "built_ins.Settings";
     const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);
+        window.parent.ipc.send(MODULE_ID, eventType, ...data);
     }
 
     sendToProcess("settings-init");
 
-
     let currentlySelectedTab: HTMLElement = undefined;
 
-    const moduleList: HTMLElement = document.getElementById("left");
+    const moduleList: HTMLElement = document.getElementById("left-list");
     const settingsList: HTMLElement = document.getElementById("right");
 
-    window.parent.ipc.on(MODULE_RENDERER_NAME, (_, eventType: string, ...data: any[]) => {
+    const importButton: HTMLElement = document.getElementById('import-button');
+    importButton.addEventListener('click', () => {
+        sendToProcess('import-module');
+    });
+
+
+    window.parent.ipc.on(MODULE_ID, (_, eventType: string, ...data: any[]) => {
         switch (eventType) {
             case "populate-settings-list": {
+                console.log(data)
                 populateSettings(data[0]);
                 break;
             }
+            case 'import-success': {
+                openRestartPopup();
+                break;
+            }
+            case 'import-error': {
+
+                break;
+            }
             case "setting-modified": {
-                const event: ChangeEvent[] = data[0]
+                const event: ChangeEvent[] = data[0];
 
                 for (const group of event) {
                     const element: any = document.getElementById(group.id);
-                    element[group.attribute] = group.value
+                    element[group.attribute] = group.value;
                 }
                 break;
             }
@@ -84,6 +96,7 @@
 
             // Setting group click button
             const groupElement: HTMLElement = document.createElement("p");
+            groupElement.className = 'setting-group'
             groupElement.innerText = moduleName;
             groupElement.addEventListener("click", () => {
                 if (currentlySelectedTab !== undefined) {
@@ -141,7 +154,7 @@
                     continue;
                 }
 
-                if (key.toUpperCase() === "LINK") {
+                if (key.toLowerCase() === "link") {
                     inner.push(`<p><span>${toSentenceCase(key)}: </span><a href=${value}>${value}</a><p/>`);
                     continue;
                 }
@@ -271,7 +284,40 @@
         `
 
         settingsList.insertAdjacentHTML("beforeend", spacerHTML);
+    }
 
+    function openRestartPopup(): void {
+        const html: string = `
+            <div class='dialog'>
+                <h3 class='disable-highlight'>Successfully imported the module.</h3>
+                <h4>You need to restart to finish the setup.<h4/>
+                <h4 style="padding-top: 10px;" class='disable-highlight'>Restart now?</h4>
+
+                <div style="display: flex; justify-content: space-between; margin: 0px 15px; margin-top: 15px;">
+                    <h3 class='disable-highlight' id='dialog-cancel'>Cancel</h3>
+                    <h3 class='disable-highlight' id='dialog-proceed'>Restart</h3>
+                </div>
+            </div>
+        `;
+
+        const div: HTMLElement = document.createElement("div");
+        div.classList.add('overlay');
+        div.innerHTML = html;
+
+        document.body.prepend(div);
+
+        div.addEventListener('click', (event) => {
+            if ((event.target as HTMLElement).className.includes('overlay')) {
+                div.remove();
+            };
+        });
+
+        div.querySelector('#dialog-cancel').addEventListener('click', () => div.remove());
+
+        div.querySelector('#dialog-proceed').addEventListener('click', () => {
+            sendToProcess("restart-now");
+            div.remove();
+        });
     }
 
     function openLinkPopup(link: string): void {
@@ -289,10 +335,10 @@
         `
 
         const div: HTMLElement = document.createElement("div");
-        div.classList.add('overlay')
-        div.innerHTML = html
+        div.classList.add('overlay');
+        div.innerHTML = html;
 
-        document.body.prepend(div)
+        document.body.prepend(div);
 
 
         div.addEventListener('click', (event) => {
@@ -313,36 +359,44 @@
 
 
     dragElement(document.getElementById("separator"));
-
     function dragElement(element: HTMLElement) {
         let md: any;
         const left: HTMLElement = document.getElementById("left");
         const right: HTMLElement = document.getElementById("right");
+        const container: HTMLElement = document.getElementById("splitter");
 
         element.onmousedown = (e: MouseEvent) => {
             md = {
                 e,
-                offsetLeft: element.offsetLeft,
-                offsetTop: element.offsetTop,
-                firstWidth: left.offsetWidth,
-                secondWidth: right.offsetWidth
+                leftWidth: left.offsetWidth,
+                rightWidth: right.offsetWidth,
+                containerWidth: container.offsetWidth
             };
 
-            document.onmousemove = (e: MouseEvent) => {
-                let delta: { x: number, y: number } = {
-                    x: e.clientX - md.e.clientX,
-                    y: e.clientY - md.e.clientY
-                };
+            document.onmousemove = (e) => {
+                const deltaX: number = e.clientX - md.e.clientX
 
-                delta.x = Math.min(Math.max(delta.x, -md.firstWidth), md.secondWidth);
+                let newLeftWidth = md.leftWidth + deltaX;
+                let newRightWidth = md.rightWidth - deltaX;
 
-                element.style.left = md.offsetLeft + delta.x + "px";
-                left.style.width = (md.firstWidth + delta.x) + "px";
-                right.style.width = (md.secondWidth - delta.x) + "px";
+                if (newLeftWidth < 0) {
+                    newLeftWidth = 0;
+                }
+
+                if (newRightWidth < 0) {
+                    newRightWidth = 0;
+                }
+
+                const leftPercent = (newLeftWidth / md.containerWidth) * 100;
+                const rightPercent = (newRightWidth / md.containerWidth) * 100;
+
+                left.style.width = leftPercent + "%";
+                right.style.width = rightPercent + "%";
             };
+
             document.onmouseup = () => {
                 document.onmousemove = document.onmouseup = null;
-            }
+            };
         };
     }
 

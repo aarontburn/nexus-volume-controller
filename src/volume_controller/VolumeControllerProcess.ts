@@ -11,22 +11,24 @@ import { StorageHandler } from "./module_builder/StorageHandler";
 
 export class VolumeControllerProcess extends Process {
 
-    private static MODULE_NAME = "Volume Controller";
+    private static readonly MODULE_NAME = "Volume Controller";
+    private static readonly MODULE_ID = "aarontburn.Volume_Controller";
 
-    // Modify this to match the path of your HTML file.
     /** @htmlpath */
-    private static HTML_PATH: string = path.join(__dirname, "./VolumeControllerHTML.html").replace("dist", "src");
+    private static readonly HTML_PATH: string = path.join(__dirname, "./VolumeControllerHTML.html").replace("dist", "src");
 
-    private static BACKGROUND_MUTE_FILE_NAME = 'bg_mute_paths.txt';
+    private static readonly BACKGROUND_MUTE_FILE_NAME = 'bg_mute_paths.txt';
 
-
-
-    private static VOLUME_REFRESH_MS = 1000;
+    private static readonly VOLUME_REFRESH_MS = 1000;
 
     private refreshTimeout: NodeJS.Timeout;
 
     public constructor(ipcCallback: IPCCallback) {
-        super(VolumeControllerProcess.MODULE_NAME, VolumeControllerProcess.HTML_PATH, ipcCallback);
+        super(
+            VolumeControllerProcess.MODULE_ID,
+            VolumeControllerProcess.MODULE_NAME,
+            VolumeControllerProcess.HTML_PATH,
+            ipcCallback);
     }
 
     public initialize(): void {
@@ -148,12 +150,12 @@ export class VolumeControllerProcess extends Process {
         paths.forEach(s => {
             if (s !== '') {
                 output += s + "\n";
-            } 
+            }
         });
 
         StorageHandler.writeToModuleStorage(
-            this, 
-            VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME, 
+            this,
+            VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME,
             output.trim());
 
     }

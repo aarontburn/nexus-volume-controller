@@ -1,4 +1,4 @@
-.splitter {
+#splitter {
     width: 100vw;
     height: 100vh;
     display: flex;
@@ -51,8 +51,31 @@
 .spacer {
     padding-right: 24px;
     display: inline-block;
-
 }
+
+
+#import-button#import-button {
+    font-size: 18px;
+    color: var(--off-white);
+    border: 1px solid var(--accent-color);
+    padding: 5px;
+    margin: 10px 15px;
+    border-radius: 5px;
+}
+
+#import-button#import-button:hover {
+    transition: 0.25s;
+    color: var(--accent-color);
+}
+
+.setting-group {
+    transition: 0.25s;
+}
+
+.setting-group:hover {
+    color: var(--accent-color);
+}
+
 
 .setting input {
     border-style: solid;
@@ -66,7 +89,6 @@
     height: 40px;
     accent-color: var(--accent-color);
     transition: 0.2s;
-
 }
 
 input:focus {
@@ -145,7 +167,7 @@ input[type='range'] {
     background-color: var(--default-background-color);
     border-radius: 5px;
     border: 1px solid var(--off-white);
-    padding: 10px;
+    padding: 20px;
     text-align: center;
 }
 
@@ -163,6 +185,14 @@ h4 {
 
 .disable-highlight {
     user-select: none;
+}
+
+.setting span:hover {
+    transition: 0.2s;
+}
+
+.setting span:hover {
+    color: var(--accent-color);
 }
 
 

@@ -6,11 +6,12 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint -c .eslintrc --ext .ts ./src",
-    "start": "npm run build && electron ./dist/main.js",
+    "start": "npm run build && electron ./dist/main.js --dev",
     "export": "node node_modules/modules-export-script/export.js"
   },
   "author": "aarontburn",
   "devDependencies": {
+    "@types/yauzl-promise": "^4.0.1",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "electron": "^28.0.0",
@@ -20,6 +21,7 @@
   "dependencies": {
     "modules-export-script": "github:aarontburn/modules-export-script",
     "native-sound-mixer": "https://gitpkg.now.sh/aarontburn/native-sound-mixer/dist?master",
-    "node-window-manager": "^2.2.4"
+    "node-window-manager": "^2.2.4",
+    "yauzl-promise": "^4.0.0"
   }
 }

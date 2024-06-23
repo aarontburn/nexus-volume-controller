@@ -24,13 +24,11 @@ export class NumberSetting extends Setting<number> {
      */
     private max: number = undefined;
 
-
-
     private step: number = 1;
 
     private useSlider: boolean = false;
 
-    private useIncrement: boolean = false;
+    private withoutIncrement: boolean = false;
 
 
     public constructor(module: Process, defer: boolean = false) {
@@ -38,14 +36,14 @@ export class NumberSetting extends Setting<number> {
     }
 
     public useRangeSliderUI(): NumberSetting {
-        this.useIncrement = false;
+        this.withoutIncrement = false;
         this.useSlider = true;
         return this;
     }
 
-    public useIncrementableUI(): NumberSetting {
+    public useNonIncrementableUI(): NumberSetting {
         this.useSlider = false;
-        this.useIncrement = true;
+        this.withoutIncrement = true;
         return this;
     }
 
@@ -128,7 +126,7 @@ export class NumberSetting extends Setting<number> {
     }
 
 
-    public _validateInput(input: any): number | null {
+    public validateInput(input: any): number | null {
         let value: number;
 
         if (input === 'increase') {
@@ -178,17 +176,15 @@ export class NumberSetting extends Setting<number> {
             slider.setInputRange(this.min, this.max);
             slider.setInputStep(this.step);
             return slider;
-        } else if (this.useIncrement) {
-            const box: IncrementableNumberSettingBox = new IncrementableNumberSettingBox(this);
-            box.setInputRange(this.min, this.max);
-            box.setInputStep(this.step);
-            return box
-
-
+        } else if (this.withoutIncrement) {
+            return new NumberSettingBox(this);
         }
+        const box: IncrementableNumberSettingBox = new IncrementableNumberSettingBox(this);
+        box.setInputRange(this.min, this.max);
+        box.setInputStep(this.step);
+        return box
 
 
-        return new NumberSettingBox(this);
 
     }
 

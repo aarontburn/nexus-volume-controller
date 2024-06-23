@@ -1,13 +1,12 @@
 (() => {
-    const MODULE_NAME: string = "Home"
-    const MODULE_PROCESS_NAME: string = MODULE_NAME.toLowerCase() + "-process";
-    const MODULE_RENDERER_NAME: string = MODULE_NAME.toLowerCase() + "-renderer"
+    const MODULE_ID: string = "built_ins.Home";
 
     const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_PROCESS_NAME.toLowerCase(), eventType, ...data);
+        window.parent.ipc.send(MODULE_ID, eventType, ...data);
     }
 
     sendToProcess("init");
+
 
     const displayContainer: HTMLElement = document.getElementById('center');
 
@@ -20,7 +19,7 @@
     let currentOrder: string = undefined 
 
 
-    window.parent.ipc.on(MODULE_RENDERER_NAME, (_, eventType: string, ...data: any[]) => {
+    window.parent.ipc.on(MODULE_ID, (_, eventType: string, ...data: any[]) => {
         switch(eventType) {
             case "update-clock": {
                 fullDate.innerHTML = data[0];
