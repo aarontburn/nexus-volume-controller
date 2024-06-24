@@ -10,7 +10,7 @@ import { StorageHandler } from './volume_controller/module_builder/StorageHandle
 
 
 export class ModuleCompiler {
-    private static readonly PATH: string = app.getPath("home") + !process.argv.includes('--dev') ? "/.modules/" : '/.modules_dev/';
+    private static readonly PATH: string = app.getPath("home") + (!process.argv.includes('--dev') ? "/.modules/" : '/.modules_dev/');
     private static readonly EXTERNAL_MODULES_PATH: string = this.PATH + "/external_modules/"
     private static readonly COMPILED_MODULES_PATH: string = this.PATH + "/built/"
     private static readonly IO_OPTIONS: { encoding: BufferEncoding, withFileTypes: true } = {

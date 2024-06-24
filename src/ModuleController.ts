@@ -154,7 +154,7 @@ export class ModuleController implements IPCSource {
             autoHideMenuBar: true
         });
 
-        this.window.loadFile(path.join(__dirname, "./../index.html"));
+        this.window.loadFile(path.join(__dirname, "./view/index.html"));
 
         this.ipcCallback = {
             notifyRenderer: (target: IPCSource, eventType: string, ...data: any[]) => {

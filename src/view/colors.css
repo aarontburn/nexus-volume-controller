@@ -3,6 +3,10 @@
     src: url("./Yu_Gothic_Light.ttf");
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 :root {
     --off-black: #111111;
     --off-white: #f5f5f5;
@@ -17,7 +21,8 @@
 
 }
 
-h1, p {
+h1,
+p {
     user-select: none;
 }
 
@@ -31,4 +36,22 @@ body {
 
 
 
+/* width */
+::-webkit-scrollbar {
+    width: 10px;
+}
 
+/* Track */
+::-webkit-scrollbar-track {
+    background: var(--default-background-color);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

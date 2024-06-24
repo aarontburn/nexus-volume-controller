@@ -41,6 +41,11 @@ body {
   border: none;
   background: none;
   font-weight: normal;
+  transition: 0.2s;
+}
+
+.header button:hover {
+  color: var(--accent-color);
 }
 
 
