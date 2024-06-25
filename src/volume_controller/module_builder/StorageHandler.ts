@@ -46,7 +46,7 @@ export class StorageHandler {
             settingMap.set(setting.getName(), setting.getValue());
         })
 
-        this.writeToModuleStorage(module, module.getSettingsFileName(), JSON.stringify(Object.fromEntries(settingMap)));
+        this.writeToModuleStorage(module, module.getSettingsFileName(), JSON.stringify(Object.fromEntries(settingMap), undefined, 4));
     }
 
 

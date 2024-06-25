@@ -17,9 +17,9 @@
     "@typescript-eslint/parser": "^4.33.0",
     "electron": "^28.0.0",
     "eslint": "^7.32.0",
+    "modules-export-script": "github:aarontburn/modules-export-script",
     "typescript": "^4.8.3",
-    "yauzl-promise": "^4.0.0",
-    "modules-export-script": "github:aarontburn/modules-export-script"
+    "yauzl-promise": "^4.0.0"
   },
   "dependencies": {
     "native-sound-mixer": "https://gitpkg.now.sh/aarontburn/native-sound-mixer/dist?master",
