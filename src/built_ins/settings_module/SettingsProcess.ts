@@ -1,25 +1,30 @@
 import * as path from "path";
+import * as fs from 'fs';
 import { BrowserWindow, OpenDialogOptions, app, dialog, shell } from 'electron';
-import { IPCCallback } from "../../aarontburn.Volume_Controller/module_builder/IPCObjects";
+import { ModuleCompiler } from "../../ModuleCompiler";
+import { IPCCallback, IPCSource } from "../../aarontburn.Volume_Controller/module_builder/IPCObjects";
 import { ModuleSettings } from "../../aarontburn.Volume_Controller/module_builder/ModuleSettings";
-import { Process } from "../../aarontburn.Volume_Controller/module_builder/Process";
+import { Process, ModuleInfo } from "../../aarontburn.Volume_Controller/module_builder/Process";
 import { Setting } from "../../aarontburn.Volume_Controller/module_builder/Setting";
 import { SettingBox, InputElement, ChangeEvent } from "../../aarontburn.Volume_Controller/module_builder/SettingBox";
-import { StorageHandler } from "../../aarontburn.Volume_Controller/module_builder/StorageHandler";
 import { BooleanSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/BooleanSetting";
 import { HexColorSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/HexColorSetting";
 import { NumberSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/NumberSetting";
-import { ModuleCompiler } from "../../ModuleCompiler";
+import { StorageHandler } from "../../aarontburn.Volume_Controller/module_builder/StorageHandler";
 
 
 export class SettingsProcess extends Process {
     public static readonly MODULE_NAME: string = "Settings";
     public static readonly MODULE_ID: string = 'built_ins.Settings';
 
-    private static readonly HTML_PATH: string = path.join(__dirname, "./SettingsHTML.html").replace('dist', 'src');;
+    private static readonly HTML_PATH: string = path.join(__dirname, "./SettingsHTML.html");
 
     private readonly moduleSettingsList: ModuleSettings[] = [];
     private readonly window: BrowserWindow;
+
+    private readonly deletedModules: string[] = [];
+    private readonly devModeSubscribers: ((isDev: boolean) => void)[] = [];  
+
 
     public constructor(ipcCallback: IPCCallback, window: BrowserWindow) {
         super(
@@ -35,6 +40,7 @@ export class SettingsProcess extends Process {
             author: "aarontburn",
             description: "General settings.",
         });
+
     }
 
     public registerSettings(): (Setting<unknown> | string)[] {
@@ -49,11 +55,16 @@ export class SettingsProcess extends Process {
             new NumberSetting(this)
                 .setRange(25, 300)
                 .setStep(10)
-                .setName("Zoom Level")
+                .setName("Zoom Level (%)")
                 .setDefault(100)
                 .setAccessID('zoom'),
 
             "Developer",
+            new BooleanSetting(this)
+                .setName('Developer Mode')
+                .setAccessID('dev_mode')
+                .setDefault(false),
+
             new BooleanSetting(this)
                 .setName("Force Reload Modules at Launch")
                 .setDescription("Always recompile modules at launch. Will result in a slower boot.")
@@ -62,6 +73,51 @@ export class SettingsProcess extends Process {
         ];
     }
 
+    public registerInternalSettings(): Setting<unknown>[] {
+        return [
+            new BooleanSetting(this)
+                .setName("Window Maximized")
+                .setDefault(false)
+                .setAccessID('window_maximized'),
+
+            new NumberSetting(this)
+                .setName('Window Width')
+                .setDefault(1920)
+                .setAccessID("window_width"),
+
+            new NumberSetting(this)
+                .setName('Window Height')
+                .setDefault(1080)
+                .setAccessID('window_height'),
+
+            new NumberSetting(this)
+                .setName('Window X')
+                .setDefault(50)
+                .setAccessID('window_x'),
+
+            new NumberSetting(this)
+                .setName('Window Y')
+                .setDefault(50)
+                .setAccessID('window_y'),
+        ];
+    }
+
+    public onExit(): void {
+        // Save window dimensions
+        const isWindowMaximized: boolean = this.window.isMaximized();
+        const bounds: { width: number, height: number, x: number, y: number } = this.window.getBounds();
+
+        this.getSettings().getSetting('window_maximized').setValue(isWindowMaximized);
+        this.getSettings().getSetting('window_width').setValue(bounds.width);
+        this.getSettings().getSetting('window_height').setValue(bounds.height);
+        this.getSettings().getSetting('window_x').setValue(bounds.x);
+        this.getSettings().getSetting('window_y').setValue(bounds.y);
+
+        StorageHandler.writeModuleSettingsToStorage(this);
+    }
+
+
+
     public refreshSettings(modifiedSetting?: Setting<unknown>): void {
         if (modifiedSetting?.getAccessID() === 'zoom') {
             const zoom: number = modifiedSetting.getValue() as number;
@@ -69,11 +125,36 @@ export class SettingsProcess extends Process {
 
         } else if (modifiedSetting?.getAccessID() === 'accent_color') {
             this.sendToRenderer("refresh-settings", modifiedSetting.getValue());
+
+        } else if (modifiedSetting?.getAccessID() === 'dev_mode') {
+            this.sendToRenderer("is-dev", modifiedSetting.getValue());
+            this.devModeSubscribers.forEach((callback) => {
+                callback(modifiedSetting.getValue() as boolean);
+            })
+
+        }
+    }
+
+
+    public async handleExternal(source: IPCSource, eventType: string, ...data: any[]): Promise<any> {
+        switch (eventType) {
+            case 'isDeveloperMode': {
+                return this.getSettings().getSetting('dev_mode').getValue() as boolean;
+            }
+            case 'onDevModeChanged': {
+                const callback: (isDev: boolean) => void = data[0];
+                this.devModeSubscribers.push(callback);
+                callback(this.getSettings().getSetting('dev_mode').getValue() as boolean);
+                break;
+            }
+
         }
     }
 
     public initialize(): void {
         super.initialize();
+
+        this.sendToRenderer("is-dev", this.getSettings().getSetting('dev_mode').getValue());
 
         const settings: any[] = [];
         for (const moduleSettings of this.moduleSettingsList) {
@@ -88,7 +169,6 @@ export class SettingsProcess extends Process {
             moduleSettings.getModule().refreshAllSettings();
         }
 
-        // this.refreshSettings();
         this.sendToRenderer("populate-settings-list", settings);
     }
 
@@ -119,42 +199,86 @@ export class SettingsProcess extends Process {
 
     }
 
-    private importModuleArchive() {
+    private async importModuleArchive(): Promise<boolean> {
         const options: OpenDialogOptions = {
             properties: ['openFile'],
-            filters: [{ name: 'Module Archive File', extensions: ['zip', 'tar'] }]
+            filters: [{ name: 'Module Archive File (.zip, .tar)', extensions: ['zip', 'tar'] }]
         };
 
-        dialog.showOpenDialog(options).then(async (response) => {
-            if (response.canceled) {
-                return;
-            }
-            const filePath: string = response.filePaths[0];
-            const successful: boolean = await ModuleCompiler.importPluginArchive(filePath);
+        const response: Electron.OpenDialogReturnValue = await dialog.showOpenDialog(options);
+        if (response.canceled) {
+            return undefined;
+        }
+        const filePath: string = response.filePaths[0];
+        const successful: boolean = await ModuleCompiler.importPluginArchive(filePath);
 
-            if (successful) {
-                this.sendToRenderer('import-success');
-                console.log("Successfully copied " + filePath + ". Restart required.");
-            } else {
-                this.sendToRenderer('import-error');
-                console.log("Error copying " + filePath + ".");
-            }
+        if (successful) {
+            console.log("Successfully copied " + filePath + ". Restart required.");
+            return true;
+        }
+        console.log("Error copying " + filePath + ".");
+        return false;
+    }
 
+    private async getImportedModules(): Promise<{ name: string, deleted: boolean }[]> {
+        const files: fs.Dirent[] = await fs.promises.readdir(StorageHandler.EXTERNAL_MODULES_PATH, { withFileTypes: true });
+        // const compiledFiles: fs.Dirent[] = await fs.promises.readdir(StorageHandler.COMPILED_MODULES_PATH, { withFileTypes: true });
+
+        const map: Map<string, boolean> = new Map();
+
+        this.deletedModules.forEach(name => map.set(name, true))
+
+        files.forEach(file => {
+            const extension: string = path.extname(file.name);
+
+            if (extension === '.zip') {
+                map.set(file.name, false);
+            }
         });
+
+        const out: { name: string, deleted: boolean }[] = [];
+        map.forEach((deleted, name) => out.push({ name: name, deleted: deleted }));
+
+        return out;
     }
 
 
-    public handleEvent(eventType: string, data: any[]): void {
+    public async handleEvent(eventType: string, data: any[]): Promise<any> {
         switch (eventType) {
             case "settings-init": {
                 this.initialize();
                 break;
             }
 
-            case 'import-module': {
-                this.importModuleArchive();
-                break;
+            case 'open-module-folder': {
+                const moduleID: string = data[0];
+                shell.openPath(path.normalize(StorageHandler.STORAGE_PATH + moduleID)).then(result => {
+                    if (result !== '') {
+                        throw new Error('Could not find folder: ' + path.normalize(StorageHandler.STORAGE_PATH + moduleID));
+                    } 
+                });
+
+                break;  
             }
+
+            case 'import-module': {
+                return this.importModuleArchive();
+            }
+            case 'manage-modules': {
+                return this.getImportedModules();
+            }
+            case 'remove-module': {
+                const fileName: string = data[0];
+
+                const result = await fs.promises.rm(`${StorageHandler.EXTERNAL_MODULES_PATH}/${fileName}`);
+                console.log("Removing " + fileName);
+                if (result === undefined) {
+                    this.deletedModules.push(fileName);
+                    return Promise.resolve(true);
+                }
+                return Promise.resolve(false);
+            }
+
             case 'restart-now': {
                 app.relaunch();
                 app.exit();
@@ -172,8 +296,9 @@ export class SettingsProcess extends Process {
                     }
 
                     const settingsList: (Setting<unknown> | string)[] = moduleSettings.getSettingsAndHeaders();
-                    const list: any = {
+                    const list: { module: string, moduleID: string, moduleInfo: ModuleInfo, settings: (Setting<unknown> | string)[] } = {
                         module: moduleName,
+                        moduleID: moduleSettings.getModule().getIPCSource(),
                         moduleInfo: moduleSettings.getModule().getModuleInfo(),
                         settings: []
                     };
@@ -194,11 +319,7 @@ export class SettingsProcess extends Process {
                         };
                         list.settings.push(settingInfo);
                     });
-
-
-                    this.sendToRenderer('swap-tab', list);
-
-
+                    return list;
                 }
 
                 break;

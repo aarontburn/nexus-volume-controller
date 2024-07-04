@@ -19,11 +19,19 @@
 
 #left {
     width: 20vw;
+    min-width: 15vw;
     height: 100%;
-    min-width: 200px;
     text-align: center;
     overflow-y: auto;
 }
+
+#right {
+    width: 80vw;
+    min-width: 40vw;
+    height: 100%;
+    overflow-y: auto;
+}
+
 
 #left p {
     font-size: 28px;
@@ -31,13 +39,6 @@
     margin: 0px;
     padding: 10px;
     user-select: none;
-}
-
-#right {
-    width: 80vw;
-    height: 100%;
-    min-width: 10px;
-    overflow-y: auto;
 }
 
 .setting {
@@ -54,7 +55,8 @@
 }
 
 
-#import-button#import-button {
+#import-button#import-button,
+#manage-button#manage-button {
     font-size: 18px;
     color: var(--off-white);
     border: 1px solid var(--accent-color);
@@ -63,7 +65,8 @@
     border-radius: 5px;
 }
 
-#import-button#import-button:hover {
+#import-button#import-button:hover,
+#manage-button#manage-button:hover {
     transition: 0.25s;
     color: var(--accent-color);
 }
@@ -227,4 +230,28 @@ br {
 
 .section p:after {
     margin-left: 10px
+}
+
+#manage-module {
+    border: 1px solid var(--off-white);
+    border-radius: 5px;
+    margin: 5px;
+    height: calc(100vh - 10px);
+}
+
+
+.installed-module {
+    margin: 5px 15px;
+    border: 1px solid var(--off-white);
+    border-radius: 5px;
+    width: calc(100% - 30px);
+    padding: 10px;
+
+    display: flex;
+}
+
+.installed-module p {
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
 }

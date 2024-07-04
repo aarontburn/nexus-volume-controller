@@ -13,10 +13,10 @@ interface Session {
 
 (() => { // Wrapped in an anonymous function for scoping.
 
-    const MODULE_ID = "aarontburn.Volume_Controller"
+    const MODULE_ID: string = "aarontburn.Volume_Controller"
 
-    const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_ID, eventType, ...data);
+    const sendToProcess = (eventType: string, ...data: any[]): Promise<any> => {
+        return window.parent.ipc.send(MODULE_ID, eventType, ...data);
     }
 
 

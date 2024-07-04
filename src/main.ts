@@ -2,23 +2,26 @@ import { app, BrowserWindow, Menu } from "electron";
 import { ModuleController } from "./ModuleController";
 
 const ipcMain: Electron.IpcMain = require('electron').ipcMain;
-const guiHandler: ModuleController = new ModuleController(ipcMain, process.argv);
+const moduleController: ModuleController = new ModuleController(ipcMain, process.argv);
 
 
-// Menu.setApplicationMenu(null)
+
+if (!process.argv.includes('--dev')) {
+    Menu.setApplicationMenu(null);
+}
 
 app.whenReady().then(() => {
-    guiHandler.start();
+    moduleController.start();
     app.on("activate", () => { // MacOS stuff
         if (BrowserWindow.getAllWindows().length === 0) {
-            guiHandler.start();
+            moduleController.start();
         }
     });
 });
 
+
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
-        guiHandler.stop();
         app.quit();
     }
 });

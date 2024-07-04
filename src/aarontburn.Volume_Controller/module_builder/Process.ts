@@ -99,7 +99,9 @@ export abstract class Process implements IPCSource {
         this._ipcCallback = ipcCallback;
 
         this._moduleSettings.addSettings(this.registerSettings());
+        this._moduleSettings.addInternalSettings(this.registerInternalSettings());
     }
+
 
     /**
      *  @returns the name of the IPC source. By default,
@@ -109,12 +111,14 @@ export abstract class Process implements IPCSource {
         return this._moduleID;
     }
 
+
     /**
      *  @returns the name of the module.
      */
     public getName(): string {
         return this._moduleName;
     }
+
 
     /**
      *  @returns the settings associated with this module. 
@@ -123,6 +127,7 @@ export abstract class Process implements IPCSource {
         return this._moduleSettings;
     }
 
+
     /**
      *  @returns the name of the settings file associated with this module.
      */
@@ -130,12 +135,14 @@ export abstract class Process implements IPCSource {
         return this._moduleName.toLowerCase() + "_settings.json";
     }
 
+
     /**
      *  @returns true if @see initialize() has been called, false otherwise.
      */
     public isInitialized(): boolean {
         return this._hasBeenInit;
     }
+
 
     /**
      *  Lifecycle function that is (usually) called when the renderer is ready.
@@ -149,6 +156,7 @@ export abstract class Process implements IPCSource {
         // Override this, and do a super.initialize() after initializing model.
     }
 
+
     /**
      *  @returns the info for this module.
      *  @see ModuleInfo
@@ -156,6 +164,7 @@ export abstract class Process implements IPCSource {
     public getModuleInfo(): ModuleInfo {
         return this._moduleInfo;
     }
+
 
     /**
      *  Sets the info for this module.
@@ -171,12 +180,25 @@ export abstract class Process implements IPCSource {
         this._moduleInfo = moduleInfo;
     }
 
+
     /**
      *  Abstract function to register settings for this module.
      * 
      *  This should not be called externally.
+     *  
+     *  @returns An array of both Settings and strings (for section headers.)
      */
     public abstract registerSettings(): (Setting<unknown> | string)[];
+
+
+    /**
+     *  Registers internal settings that will not appear under the settings window.
+     * 
+     *  @returns An array of Settings.
+     */
+    public registerInternalSettings(): Setting<unknown>[] {
+        return [];
+    }
 
 
     /**
@@ -200,6 +222,7 @@ export abstract class Process implements IPCSource {
         }
     }
 
+
     /**
      *  @private
      * 
@@ -208,6 +231,7 @@ export abstract class Process implements IPCSource {
     public onGUIShown() {
         // Do nothing by default.
     }
+
 
     /**
      *  @private 
@@ -218,14 +242,16 @@ export abstract class Process implements IPCSource {
         // Do nothing by default. 
     }
 
+
     /**
      *  @private
      * 
      *  Lifecycle function that is called before the application exits.
      */
-    public stop(): void {
+    public onExit(): void {
         // Do nothing by default.
     }
+
 
     /**
      *  @returns the path to the HTML file associated with this module. 
@@ -242,21 +268,21 @@ export abstract class Process implements IPCSource {
         return this._moduleName;
     }
 
+
     /**
      *  Entry point to receive events from the renderer. 
      * 
-     *  @param eventType The name of the event
-     *  @param data The data sent from the renderer.
+     *  @param eventType    The name of the event
+     *  @param data         The data sent from the renderer.
      */
-    public abstract handleEvent(eventType: string, ...data: any[]): void
-
+    public abstract handleEvent(eventType: string, ...data: any[]): void | Promise<any>
 
 
     /**
      *  Send an event to the renderer.
      * 
-     *  @param eventType The name of the event.
-     *  @param data The data to send.
+     *  @param eventType    The name of the event.
+     *  @param data         The data to send.
      *  @see https://www.electronjs.org/docs/latest/tutorial/ipc#object-serialization
      */
     public sendToRenderer(eventType: string, ...data: any): void {
@@ -264,8 +290,14 @@ export abstract class Process implements IPCSource {
     }
 
 
-
-    
+    /**
+     *  Exposes an API to external modules. 
+     * 
+     *  @param source       The module requesting data.
+     *  @param eventType    The event type.
+     *  @param data         Any additional data supplied;
+     *  @returns            A Promise of the data to return.
+     */
     public async handleExternal(source: IPCSource, eventType: string, ...data: any[]): Promise<any> {
         console.log(`[${this._moduleName}]: External module, '${source.getIPCSource()}' requested data.'`);
         console.log(`\tWith event type of: ${eventType}`);
@@ -274,9 +306,18 @@ export abstract class Process implements IPCSource {
         return null;
     }
 
+    
+    /**
+     *  Requests information from another module. 
+     * 
+     *  @param target       The ID of the target module.
+     *  @param eventType    The event type.
+     *  @param data         Any additional data to be supplied
+     *  @returns            The data returned from the request.
+     */
     public async requestExternal(target: string, eventType: string, ...data: any[]): Promise<any> {
-        return this._ipcCallback.requestExternalModule(this, target, eventType, data);
-    } 
+        return this._ipcCallback.requestExternalModule(this, target, eventType, ...data);
+    }
 
 
 }

@@ -1,8 +1,8 @@
 (() => {
     const MODULE_ID: string = "built_ins.Home";
 
-    const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_ID, eventType, ...data);
+    const sendToProcess = (eventType: string, ...data: any[]): Promise<any> => {
+        return window.parent.ipc.send(MODULE_ID, eventType, ...data);
     }
 
     sendToProcess("init");
@@ -12,11 +12,10 @@
 
     const fullDate: HTMLElement = document.getElementById("full-date");
     const abbreviatedDate: HTMLElement = document.getElementById("abbreviated-date");
-    
     const standardTime: HTMLElement = document.getElementById("standard-time");
     const militaryTime: HTMLElement = document.getElementById("military-time");
     
-    let currentOrder: string = undefined 
+    let currentOrder: string = undefined;
 
 
     window.parent.ipc.on(MODULE_ID, (_, eventType: string, ...data: any[]) => {

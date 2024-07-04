@@ -14,9 +14,6 @@ body {
   width: 100vw;
 }
 
-.box .row {
-  border: 1px dotted grey;
-}
 
 .box .header {
   flex: 0 1 auto;

@@ -20,37 +20,60 @@
         value: any
     }
 
-    const MODULE_ID = "built_ins.Settings";
-    const sendToProcess = (eventType: string, ...data: any): void => {
-        window.parent.ipc.send(MODULE_ID, eventType, ...data);
+    interface TabInfo {
+        module: string,
+        moduleID: string,
+        moduleInfo: ModuleInfo,
+        settings: any[]
+    }
+
+    const MODULE_ID: string = "built_ins.Settings";
+    const sendToProcess = (eventType: string, ...data: any[]): Promise<any> => {
+        return window.parent.ipc.send(MODULE_ID, eventType, ...data);
     }
 
     sendToProcess("settings-init");
 
-    let currentlySelectedTab: HTMLElement = undefined;
+    let isDeveloperMode: boolean = false;
 
+    let selectedTabElement: HTMLElement = undefined;
     const moduleList: HTMLElement = document.getElementById("left-list");
     const settingsList: HTMLElement = document.getElementById("right");
 
     const importButton: HTMLElement = document.getElementById('import-button');
     importButton.addEventListener('click', () => {
-        sendToProcess('import-module');
+        sendToProcess('import-module').then(successful => {
+            if (successful) {
+                openRestartPopup();
+            } else {
+                console.log("Error importing module.");
+            }
+
+        });
+    });
+
+    const manageButton: HTMLElement = document.getElementById('manage-button');
+    manageButton.addEventListener('click', () => {
+        sendToProcess('manage-modules').then(data => {
+            swapTabs('manage');
+            openManageScreen(data);
+        });
     });
 
 
     window.parent.ipc.on(MODULE_ID, (_, eventType: string, ...data: any[]) => {
         switch (eventType) {
-            case "populate-settings-list": {
-                console.log(data)
-                populateSettings(data[0]);
-                break;
-            }
-            case 'import-success': {
-                openRestartPopup();
-                break;
-            }
-            case 'import-error': {
+            case 'is-dev': {
+                isDeveloperMode = data[0] as boolean;
 
+                const element: HTMLElement = document.getElementById('moduleID');
+                if (element) {
+                    element.hidden = !isDeveloperMode;
+                }
+                break;
+            }
+            case "populate-settings-list": {
+                populateSettings(data[0]);
                 break;
             }
             case "setting-modified": {
@@ -81,10 +104,6 @@
                 break;
             }
 
-            case "swap-tab": {
-                swapTabs(data[0]);
-                break;
-            }
         }
     });
 
@@ -96,16 +115,17 @@
 
             // Setting group click button
             const groupElement: HTMLElement = document.createElement("p");
-            groupElement.className = 'setting-group'
+            groupElement.className = 'setting-group';
             groupElement.innerText = moduleName;
             groupElement.addEventListener("click", () => {
-                if (currentlySelectedTab !== undefined) {
-                    currentlySelectedTab.style.color = "";
+                if (selectedTabElement !== undefined) {
+                    selectedTabElement.style.color = "";
                 }
-                currentlySelectedTab = groupElement;
-                currentlySelectedTab.setAttribute("style", "color: var(--accent-color);")
 
-                sendToProcess('swap-settings-tab', moduleName);
+                selectedTabElement = groupElement;
+                selectedTabElement.setAttribute("style", "color: var(--accent-color);");
+
+                sendToProcess('swap-settings-tab', moduleName).then(swapTabs);
             });
 
             if (firstModule === undefined) {
@@ -138,12 +158,45 @@
         'buildVersion', 'build_version',
     ];
 
+    const nonDevWhitelist: string[] = [
+        'moduleName', 'module_name',
+        'description',
+        'link',
+        'author',
+    ];
 
-    function swapTabs(tab: any): void {
+
+
+
+    function swapTabs(tab: TabInfo | string): void {
+        // Clear existing settings
+        const removeNodes: Node[] = [];
+        settingsList.childNodes.forEach((node: HTMLElement) => {
+            if (node.id !== 'manage-module') {
+                removeNodes.push(node);
+            } else {
+                node.hidden = true;
+            }
+        });
+
+        removeNodes.forEach(node => settingsList.removeChild(node));
+
+        if (tab === 'manage') {
+            return;
+        }
+
+        const tabInfo: TabInfo = tab as TabInfo;
+
+
         function getModuleInfoHTML(moduleInfo: any): string {
             const toSentenceCase = (key: string) => key.charAt(0).toUpperCase() + key.slice(1);
             const inner: string[] = [];
-            inner.push(`<p style="font-size: 27px; color: var(--accent-color);">${moduleInfo.moduleName || tab.module}</p>`);
+
+
+            inner.push(`<p id='open-folder' class='setting-group' style='float: right; font-size: 25px; margin-top: -12px;'>🗀</p>`)
+            inner.push(`<p style="font-size: 27px; color: var(--accent-color);">${moduleInfo.moduleName || tabInfo.module}</p>`);
+            inner.push(`<p id='moduleID' ${!isDeveloperMode ? 'hidden' : ''}><span>Module ID: </span>${tabInfo.moduleID}<p/>`);
+
             for (const key in moduleInfo) {
                 if (keyBlacklist.includes(key)) {
                     continue;
@@ -154,22 +207,28 @@
                     continue;
                 }
 
-                if (key.toLowerCase() === "link") {
-                    inner.push(`<p><span>${toSentenceCase(key)}: </span><a href=${value}>${value}</a><p/>`);
-                    continue;
+                if (!isDeveloperMode) {
+                    if (key.toLowerCase() === "link") {
+                        inner.push(`<p><span>${toSentenceCase(key)}: </span><a href=${value}>${value}</a><p/>`);
+                    } else if (nonDevWhitelist.includes(key)) {
+                        inner.push(`<p><span>${toSentenceCase(key)}:</span> ${value}</p>`);
+                    }
+
+                } else {
+                    if (key.toLowerCase() === "link") {
+                        inner.push(`<p><span>${toSentenceCase(key)}: </span><a href=${value}>${value}</a><p/>`);
+                        continue;
+                    }
+                    inner.push(`<p><span>${toSentenceCase(key)}:</span> ${value}</p>`);
                 }
-                inner.push(`<p><span>${toSentenceCase(key)}:</span> ${value}</p>`);
+
+
             }
             return inner.reduce((acc, html) => acc += html + "\n", '');
         }
 
 
-        // Clear existing settings
-        while (settingsList.firstChild) {
-            settingsList.removeChild(settingsList.firstChild);
-        }
-
-        const moduleInfo: ModuleInfo = tab.moduleInfo;
+        const moduleInfo: ModuleInfo = tabInfo.moduleInfo;
 
         if (moduleInfo !== undefined) {
             const moduleInfoHTML: string = `
@@ -178,9 +237,12 @@
                 </div>
             `
             settingsList.insertAdjacentHTML("beforeend", moduleInfoHTML);
+            document.getElementById('open-folder').addEventListener('click', () => {
+                sendToProcess('open-module-folder', tabInfo.moduleID);
+            })
         }
 
-        tab.settings.forEach((settingInfo: any) => {
+        tabInfo.settings.forEach(settingInfo => {
             if (typeof settingInfo === 'string') {
                 const headerHTML: string = `
                     <div class='section'>
@@ -286,44 +348,167 @@
         settingsList.insertAdjacentHTML("beforeend", spacerHTML);
     }
 
-    function openRestartPopup(): void {
+
+    const screen: HTMLElement = document.getElementById("manage-module");
+    const list: HTMLElement = document.getElementById('installed-modules-list');
+
+    function openManageScreen(data: { name: string, deleted: boolean }[]): void {
+        screen.hidden = false;
+
+        // Clear list
+        while (list.firstChild) {
+            list.removeChild(list.lastChild);
+        }
+
+        if (data.length === 0) { // No external modules
+            const html: string = `
+                <p style='margin: 0; margin-left: 15px;'>No external modules found.</p>
+            `;
+            list.insertAdjacentHTML('beforeend', html);
+
+        }
+
+
+        data.forEach(({ name, deleted }) => {
+            const div: HTMLDivElement = document.createElement('div');
+            div.className = 'installed-module';
+            div.innerHTML = `
+                ${!deleted
+                    ? `<p>${name}</p>`
+                    : `<p style="font-style: italic; color: grey;"}>${name}</p>`}
+
+                <div style="margin-right: auto;"></div>
+
+                ${!deleted
+                    ? `<p class='remove-module-button' style="color: red; margin-right: 15px">Remove</p>`
+                    : `<p style="margin-right: 15px; font-style: italic;">Restart Required</p>`}
+            `;
+
+
+            div.querySelector('.remove-module-button')?.addEventListener('click', async () => {
+                const proceed: boolean = await openConfirmModuleDeletionPopup();
+                if (proceed) {
+                    sendToProcess('remove-module', name).then(successful => {
+                        if (successful) {
+                            console.log('Removed ' + name);
+                            openDeletedPopup()
+                        } else {
+                            console.log('Failed to remove ' + name);
+                        }
+
+                        sendToProcess('manage-modules').then(openManageScreen);
+                    });
+                }
+            });
+
+
+            list.insertAdjacentElement('beforeend', div);
+        });
+    }
+
+    async function openPopup(
+        html: string,
+        rejectID: string = 'dialog-cancel',
+        resolveID: string = 'dialog-proceed'): Promise<boolean> {
+
+        return new Promise((resolve) => {
+            const div: HTMLElement = document.createElement("div");
+            div.classList.add('overlay');
+            div.innerHTML = html;
+            document.body.prepend(div);
+
+            div.addEventListener('click', (event) => {
+                if ((event.target as HTMLElement).className.includes('overlay')) {
+                    div.remove();
+                    resolve(false);
+                }
+            });
+
+            div.querySelector(`#${rejectID}`)?.addEventListener('click', () => {
+                div.remove();
+                resolve(false);
+            });
+
+            div.querySelector(`#${resolveID}`)?.addEventListener('click', () => {
+                div.remove();
+                resolve(true);
+            });
+        });
+    }
+
+
+    function color(text: string, color: string = 'var(--accent-color)'): string {
+        return `<span style='color: ${color};'>${text}</span>`
+    }
+
+    function openConfirmModuleDeletionPopup(): Promise<boolean> {
         const html: string = `
             <div class='dialog'>
-                <h3 class='disable-highlight'>Successfully imported the module.</h3>
-                <h4>You need to restart to finish the setup.<h4/>
-                <h4 style="padding-top: 10px;" class='disable-highlight'>Restart now?</h4>
+                <h3 class='disable-highlight'>Are you sure you want to ${color('delete', 'red')} this module?</h3>
+                <h4>Your data will be saved.<h4/>
+                <h4 style="padding-top: 10px;" class='disable-highlight'>Proceed?</h4>
 
                 <div style="display: flex; justify-content: space-between; margin: 0px 15px; margin-top: 15px;">
                     <h3 class='disable-highlight' id='dialog-cancel'>Cancel</h3>
+                    <h3 class='disable-highlight' id='dialog-proceed'>Delete</h3>
+                </div>
+            </div>
+        `;
+
+        return openPopup(html);
+    }
+
+    function openDeletedPopup() {
+        const html: string = `
+            <div class='dialog'>
+                <h3 class='disable-highlight'>${color('Successfully', 'green')} deleted module.</h3>
+                <h4>Restart required for the changes to take effect.<h4/>
+                <h4 style="padding-top: 10px;" class='disable-highlight'>Restart now?</h4>
+
+                <div style="display: flex; justify-content: space-between; margin: 0px 15px; margin-top: 15px;">
+                    <h3 class='disable-highlight' id='dialog-cancel'>Not Now</h3>
                     <h3 class='disable-highlight' id='dialog-proceed'>Restart</h3>
                 </div>
             </div>
         `;
 
-        const div: HTMLElement = document.createElement("div");
-        div.classList.add('overlay');
-        div.innerHTML = html;
+        openPopup(html).then((proceed: boolean) => {
+            if (proceed) {
+                sendToProcess("restart-now");
+            }
+        });
+    }
 
-        document.body.prepend(div);
 
-        div.addEventListener('click', (event) => {
-            if ((event.target as HTMLElement).className.includes('overlay')) {
-                div.remove();
-            };
+
+
+
+    function openRestartPopup(): void {
+        const html: string = `
+            <div class='dialog'>
+                <h3 class='disable-highlight'>${color('Successfully', 'green')} imported the module.</h3>
+                <h4>You need to restart to finish the setup.<h4/>
+                <h4 style="padding-top: 10px;" class='disable-highlight'>Restart now?</h4>
+
+                <div style="display: flex; justify-content: space-between; margin: 0px 15px; margin-top: 15px;">
+                    <h3 class='disable-highlight' id='dialog-cancel'>Not now</h3>
+                    <h3 class='disable-highlight' id='dialog-proceed'>Restart</h3>
+                </div>
+            </div>
+        `;
+
+        openPopup(html).then((proceed: boolean) => {
+            if (proceed) {
+                sendToProcess("restart-now");
+            }
         });
 
-        div.querySelector('#dialog-cancel').addEventListener('click', () => div.remove());
-
-        div.querySelector('#dialog-proceed').addEventListener('click', () => {
-            sendToProcess("restart-now");
-            div.remove();
-        });
     }
 
     function openLinkPopup(link: string): void {
         const html: string = `
             <div class="dialog">
-                <h3 class='disable-highlight'>You are navigating to an external website.</h3>
+                <h3 class='disable-highlight'>You are navigating to an ${color('external', 'red')} website.</h3>
                 <h4 class='link'>${link}</h4>
                 <h4 style="padding-top: 10px;" class='disable-highlight'>Only visit the site if you trust it.</h4>
 
@@ -334,24 +519,10 @@
             </div>
         `
 
-        const div: HTMLElement = document.createElement("div");
-        div.classList.add('overlay');
-        div.innerHTML = html;
-
-        document.body.prepend(div);
-
-
-        div.addEventListener('click', (event) => {
-            if ((event.target as HTMLElement).className.includes('overlay')) {
-                div.remove();
-            };
-        });
-
-        div.querySelector('#dialog-cancel').addEventListener('click', () => div.remove());
-
-        div.querySelector('#dialog-proceed').addEventListener('click', () => {
-            sendToProcess("open-link", link);
-            div.remove();
+        openPopup(html).then((proceed: boolean) => {
+            if (proceed) {
+                sendToProcess("open-link", link);
+            }
         });
 
     }
@@ -373,11 +544,11 @@
                 containerWidth: container.offsetWidth
             };
 
-            document.onmousemove = (e) => {
+            document.onmousemove = (e: MouseEvent) => {
                 const deltaX: number = e.clientX - md.e.clientX
 
-                let newLeftWidth = md.leftWidth + deltaX;
-                let newRightWidth = md.rightWidth - deltaX;
+                let newLeftWidth: number = md.leftWidth + deltaX;
+                let newRightWidth: number = md.rightWidth - deltaX;
 
                 if (newLeftWidth < 0) {
                     newLeftWidth = 0;
@@ -387,8 +558,8 @@
                     newRightWidth = 0;
                 }
 
-                const leftPercent = (newLeftWidth / md.containerWidth) * 100;
-                const rightPercent = (newRightWidth / md.containerWidth) * 100;
+                const leftPercent: number = (newLeftWidth / md.containerWidth) * 100;
+                const rightPercent: number = (newRightWidth / md.containerWidth) * 100;
 
                 left.style.width = leftPercent + "%";
                 right.style.width = rightPercent + "%";
