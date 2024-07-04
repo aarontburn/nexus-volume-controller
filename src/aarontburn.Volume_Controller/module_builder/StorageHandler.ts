@@ -26,7 +26,7 @@ export class StorageHandler {
      *  @param contents The contents to write in the file.
      */
     public static async writeToModuleStorage(module: Process, fileName: string, contents: string): Promise<void> {
-        const dirName: string = module.getName().toLowerCase();
+        const dirName: string = module.getIPCSource();
         const folderName: string = this.STORAGE_PATH + dirName + "/";
         const filePath: string = folderName + fileName;
 
@@ -59,7 +59,7 @@ export class StorageHandler {
      *  @returns        The contents of the file, or null if there was an error reading it.
      */
     public static readFromModuleStorage(module: Process, fileName: string, encoding: string = 'utf-8'): string | null {
-        const dirName: string = module.getName().toLowerCase();
+        const dirName: string = module.getIPCSource();
         const folderName: string = this.STORAGE_PATH + dirName + "/";
         const filePath: string = folderName + fileName;
 
@@ -87,7 +87,7 @@ export class StorageHandler {
     public static readSettingsFromModuleStorage(module: Process): Map<string, any> {
         const settingMap: Map<string, any> = new Map();
 
-        const dirName: string = module.getName().toLowerCase();
+        const dirName: string = module.getIPCSource();
         const folderName: string = this.STORAGE_PATH + dirName + "/";
         const filePath: string = folderName + module.getSettingsFileName();
 

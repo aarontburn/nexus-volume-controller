@@ -1,9 +1,9 @@
 import * as path from "path";
-import { IPCCallback } from "../../volume_controller/module_builder/IPCObjects";
-import { Process } from "../../volume_controller/module_builder/Process";
-import { Setting } from "../../volume_controller/module_builder/Setting";
-import { NumberSetting } from "../../volume_controller/module_builder/settings/types/NumberSetting";
-import { StringSetting } from "../../volume_controller/module_builder/settings/types/StringSetting";
+import { IPCCallback } from "../../aarontburn.Volume_Controller/module_builder/IPCObjects";
+import { Process } from "../../aarontburn.Volume_Controller/module_builder/Process";
+import { Setting } from "../../aarontburn.Volume_Controller/module_builder/Setting";
+import { NumberSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/NumberSetting";
+import { StringSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/StringSetting";
 
 
 

@@ -4,9 +4,9 @@ import * as path from 'path';
 import ts from 'typescript';
 import * as yauzl from 'yauzl-promise';
 import { pipeline } from 'stream/promises';
-import { IPCCallback } from './volume_controller/module_builder/IPCObjects';
-import { Process, ModuleInfo } from './volume_controller/module_builder/Process';
-import { StorageHandler } from './volume_controller/module_builder/StorageHandler';
+import { IPCCallback } from './aarontburn.Volume_Controller/module_builder/IPCObjects';
+import { Process, ModuleInfo } from './aarontburn.Volume_Controller/module_builder/Process';
+import { StorageHandler } from './aarontburn.Volume_Controller/module_builder/StorageHandler';
 
 
 export class ModuleCompiler {

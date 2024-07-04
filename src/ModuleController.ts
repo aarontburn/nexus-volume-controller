@@ -3,11 +3,11 @@ import * as path from "path";
 import { SettingsProcess } from "./built_ins/settings_module/SettingsProcess";
 import { HomeProcess } from "./built_ins/home_module/HomeProcess";
 import { ModuleCompiler } from "./ModuleCompiler";
-import { IPCSource, IPCCallback } from "./volume_controller/module_builder/IPCObjects";
-import { ModuleSettings } from "./volume_controller/module_builder/ModuleSettings";
-import { Process } from "./volume_controller/module_builder/Process";
-import { Setting } from "./volume_controller/module_builder/Setting";
-import { StorageHandler } from "./volume_controller/module_builder/StorageHandler";
+import { IPCSource, IPCCallback } from "./aarontburn.Volume_Controller/module_builder/IPCObjects";
+import { ModuleSettings } from "./aarontburn.Volume_Controller/module_builder/ModuleSettings";
+import { Process } from "./aarontburn.Volume_Controller/module_builder/Process";
+import { Setting } from "./aarontburn.Volume_Controller/module_builder/Setting";
+import { StorageHandler } from "./aarontburn.Volume_Controller/module_builder/StorageHandler";
 
 const WINDOW_DIMENSION: { width: number, height: number } = { width: 1920, height: 1080 };
 

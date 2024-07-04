@@ -1,14 +1,14 @@
 import * as path from "path";
 import { BrowserWindow, OpenDialogOptions, app, dialog, shell } from 'electron';
-import { IPCCallback } from "../../volume_controller/module_builder/IPCObjects";
-import { ModuleSettings } from "../../volume_controller/module_builder/ModuleSettings";
-import { Process } from "../../volume_controller/module_builder/Process";
-import { Setting } from "../../volume_controller/module_builder/Setting";
-import { SettingBox, InputElement, ChangeEvent } from "../../volume_controller/module_builder/SettingBox";
-import { StorageHandler } from "../../volume_controller/module_builder/StorageHandler";
-import { BooleanSetting } from "../../volume_controller/module_builder/settings/types/BooleanSetting";
-import { HexColorSetting } from "../../volume_controller/module_builder/settings/types/HexColorSetting";
-import { NumberSetting } from "../../volume_controller/module_builder/settings/types/NumberSetting";
+import { IPCCallback } from "../../aarontburn.Volume_Controller/module_builder/IPCObjects";
+import { ModuleSettings } from "../../aarontburn.Volume_Controller/module_builder/ModuleSettings";
+import { Process } from "../../aarontburn.Volume_Controller/module_builder/Process";
+import { Setting } from "../../aarontburn.Volume_Controller/module_builder/Setting";
+import { SettingBox, InputElement, ChangeEvent } from "../../aarontburn.Volume_Controller/module_builder/SettingBox";
+import { StorageHandler } from "../../aarontburn.Volume_Controller/module_builder/StorageHandler";
+import { BooleanSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/BooleanSetting";
+import { HexColorSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/HexColorSetting";
+import { NumberSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/NumberSetting";
 import { ModuleCompiler } from "../../ModuleCompiler";
 
 
