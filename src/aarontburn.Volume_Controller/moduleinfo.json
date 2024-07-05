@@ -3,7 +3,7 @@
     "author": "aarontburn",
     "version": "1.0.0",
     "description": "A system volume mixer.",
-    "build_version": 72,
+    "build_version": 73,
     "link": "https://github.com/aarontburn/modules-volume_controller",
     "platforms": [
         "win32"

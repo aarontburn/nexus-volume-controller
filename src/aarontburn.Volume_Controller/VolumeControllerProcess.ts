@@ -11,15 +11,13 @@ import { StorageHandler } from "./module_builder/StorageHandler";
 
 export class VolumeControllerProcess extends Process {
 
-    private static readonly MODULE_NAME = "Volume Controller";
-    private static readonly MODULE_ID = "aarontburn.Volume_Controller";
+    private static readonly MODULE_NAME: string = "Volume Controller";
+    private static readonly MODULE_ID:string = "aarontburn.Volume_Controller";
+    private static readonly HTML_PATH: string = path.join(__dirname, "./VolumeControllerHTML.html");
 
-    /** @htmlpath */
-    private static readonly HTML_PATH: string = path.join(__dirname, "./VolumeControllerHTML.html").replace("dist", "src");
+    private static readonly BACKGROUND_MUTE_FILE_NAME: string = 'bg_mute_paths.txt';
 
-    private static readonly BACKGROUND_MUTE_FILE_NAME = 'bg_mute_paths.txt';
-
-    private static readonly VOLUME_REFRESH_MS = 1000;
+    private static readonly VOLUME_REFRESH_MS: number = 1000;
 
     private refreshTimeout: NodeJS.Timeout;
 

@@ -107,6 +107,8 @@ export class StorageHandler {
             return settingMap;
         }
 
+        // TODO: Handle error if contents is falsy
+
         const json: any = JSON.parse(contents);
         for (const settingName in json) {
             settingMap.set(settingName, json[settingName]);

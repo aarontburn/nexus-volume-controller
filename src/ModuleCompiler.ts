@@ -290,12 +290,12 @@ export class ModuleCompiler {
         const outputFileName: string = path.basename(inputFilePath).replace('.ts', '.js');
         const outputFilePath: string = path.join(outputDir, outputFileName);
 
-        const formatted: string = this.formatCompilerOutput(outputText);
+        // const formatted: string = this.formatCompilerOutput(outputText);
 
 
         try {
             await fs.promises.mkdir(outputDir, { recursive: true });
-            await fs.promises.writeFile(outputFilePath, formatted);
+            await fs.promises.writeFile(outputFilePath, outputText);
             console.log(`File compiled successfully: ${outputFilePath}`);
         } catch (error) {
             console.error(`Error compiling file: ${error}`);
@@ -336,26 +336,8 @@ export class ModuleCompiler {
                     break;
                 }
 
-                case "<!-- @renderer -->": { // Update renderer path
-                    const script: string = lines[i + 1].trim();
-
-                    // TODO: Match the script better.
-                    const src: string = script.replace('"></script>', "").split(" ")[2]
-                    if (src.substring(0, 3) !== "src") {
-                        throw new Error("Could not parse script line: " + script);
-                    }
-                    // src="../../dist/{DIRECTORY}/{MODULE_NAME}.js"
-                    const replacedSrc: string = src.substring(src.lastIndexOf("/") + 1);
-                    const finalScript: string = `\t<script defer src="${replacedSrc}"></script>`
-                    lines[i + 1] = finalScript
-
-
-                    break;
-                }
             }
 
-
-            // console.log(lines[i]);
         }
 
         await fs.promises.writeFile(outputPath, lines.join("\n"));
