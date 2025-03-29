@@ -4,10 +4,11 @@ import { ModuleController } from "./ModuleController";
 const ipcMain: Electron.IpcMain = require('electron').ipcMain;
 const moduleController: ModuleController = new ModuleController(ipcMain, process.argv);
 
-
-
 if (!process.argv.includes('--dev')) {
     Menu.setApplicationMenu(null);
+
+} else {
+
 }
 
 app.whenReady().then(() => {
@@ -25,6 +26,7 @@ app.on("window-all-closed", () => {
         app.quit();
     }
 });
+
 
 
 

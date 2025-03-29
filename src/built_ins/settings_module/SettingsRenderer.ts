@@ -60,7 +60,6 @@
         });
     });
 
-
     window.parent.ipc.on(MODULE_ID, (_, eventType: string, ...data: any[]) => {
         switch (eventType) {
             case 'is-dev': {

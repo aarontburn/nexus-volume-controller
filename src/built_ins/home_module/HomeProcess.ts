@@ -1,9 +1,8 @@
+import { IPCCallback } from "module_builder/dist/IPCObjects";
+import { Process } from "module_builder/dist/Process";
+import { Setting } from "module_builder/dist/Setting";
+import { NumberSetting, StringSetting } from "module_builder/dist/settings/types";
 import * as path from "path";
-import { IPCCallback } from "../../aarontburn.Volume_Controller/module_builder/IPCObjects";
-import { Process } from "../../aarontburn.Volume_Controller/module_builder/Process";
-import { Setting } from "../../aarontburn.Volume_Controller/module_builder/Setting";
-import { NumberSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/NumberSetting";
-import { StringSetting } from "../../aarontburn.Volume_Controller/module_builder/settings/types/StringSetting";
 
 
 
@@ -53,6 +52,7 @@ export class HomeProcess extends Process {
 		// Start clock
 		this.updateDateAndTime(false);
 
+
 		this.clockTimeout = setTimeout(() => this.updateDateAndTime(true), 1000 - new Date().getMilliseconds());
 		
 	}
@@ -84,6 +84,7 @@ export class HomeProcess extends Process {
 			this.clockTimeout = setTimeout(() => this.updateDateAndTime(true), 1000);
 		}
 	}
+	
 
 	public registerSettings(): (Setting<unknown> | string)[] {
 		return [
@@ -159,7 +160,7 @@ export class HomeProcess extends Process {
 		}
 	}
 
-	public handleEvent(eventType: string, data: any[]): void {
+	public async handleEvent(eventType: string, data: any[]): Promise<any> {
 		switch (eventType) {
 			case "init": {
 				this.initialize();

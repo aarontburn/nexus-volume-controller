@@ -1,12 +1,10 @@
 import * as path from "path";
-import { Process } from "./module_builder/Process";
-import { IPCCallback } from "./module_builder/IPCObjects";
-import { Setting } from "./module_builder/Setting";
-import { BooleanSetting } from "./module_builder/settings/types/BooleanSetting";
 import { SessionController } from "./SessionController";
-import { StorageHandler } from "./module_builder/StorageHandler";
-
-
+import { BooleanSetting } from "module_builder/settings/types";
+import { StorageHandler } from "module_builder/StorageHandler";
+import { Process } from "module_builder/Process"
+import { IPCCallback } from "module_builder/IPCObjects";
+import { Setting } from "module_builder/Setting";
 
 
 export class VolumeControllerProcess extends Process {
@@ -83,7 +81,7 @@ export class VolumeControllerProcess extends Process {
     }
 
 
-    public handleEvent(eventType: string, data: any[]): void {
+    public async handleEvent(eventType: string, data: any[]): Promise<any> {
         switch (eventType) {
             case "init": {
                 this.initialize();

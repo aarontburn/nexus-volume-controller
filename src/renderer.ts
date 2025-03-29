@@ -32,15 +32,18 @@
             case "load-modules": {
                 const moduleHtml: HTMLElement = document.getElementById("modules");
                 const headerHtml: HTMLElement = document.getElementById("header");
+                headerHtml.innerHTML = "";
+                moduleHtml.innerHTML = "";
 
 
-                for (const {moduleName, moduleID, htmlPath} of data) {
+                for (const { moduleName, moduleID, htmlPath } of data) {
                     const moduleView: HTMLElement = document.createElement("iframe");
                     moduleView.id = moduleID;
                     moduleView.setAttribute("src", htmlPath);
                     moduleView.setAttribute("style", IFRAME_DEFAULT_STYLE);
                     // moduleView.setAttribute("sandbox", SANDBOX_RESTRICTIONS)
                     moduleHtml.insertAdjacentElement("beforeend", moduleView);
+
 
 
                     const headerButton: HTMLElement = document.createElement("button");
@@ -63,6 +66,7 @@
                     });
                     headerHtml.insertAdjacentElement("beforeend", headerButton);
                 }
+
                 break;
             }
             case "swap-modules": {
@@ -80,6 +84,8 @@
 
         document.getElementById(swapToLayoutId).setAttribute("style", IFRAME_DEFAULT_STYLE);
     }
+
+
 
 })()
 

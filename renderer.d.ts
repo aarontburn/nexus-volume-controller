@@ -5,8 +5,14 @@ export interface IIPC {
 }
 
 
+export interface ICommon {
+    args: string[]
+}
+
+
 declare global {
     interface Window {
         ipc: IIPC,
+        common: ICommon
     }
 }
