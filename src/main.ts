@@ -1,38 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
-import { ModuleController } from "./ModuleController";
+import { app as _ } from "electron";
 
-const ipcMain: Electron.IpcMain = require('electron').ipcMain;
-const moduleController: ModuleController = new ModuleController(ipcMain, process.argv);
-
-if (!process.argv.includes('--dev')) {
-    Menu.setApplicationMenu(null);
-
-} else {
-
-}
-
-app.whenReady().then(() => {
-    moduleController.start();
-    app.on("activate", () => { // MacOS stuff
-        if (BrowserWindow.getAllWindows().length === 0) {
-            moduleController.start();
-        }
-    });
-});
-
-
-app.on("window-all-closed", () => {
-    if (process.platform !== "darwin") {
-        app.quit();
-    }
-});
-
-
-
-
-
-
-
-
-
-
+// This file is to indicate that Electron is being used and SHOULD NOT be modified. 
+// Can be safely ignored. Do not add logic here.

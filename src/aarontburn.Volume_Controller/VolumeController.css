@@ -47,14 +47,15 @@
     accent-color: var(--accent-color)
 }
 
-
-
-
 #session-box-container {
     display: flex;
     flex-direction: column;
     height: 98%;
     width: 100%;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
 }
 
 /* Master */

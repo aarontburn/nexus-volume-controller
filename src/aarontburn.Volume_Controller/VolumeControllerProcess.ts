@@ -1,10 +1,7 @@
 import * as path from "path";
 import { SessionController } from "./SessionController";
-import { BooleanSetting } from "module_builder/settings/types";
-import { StorageHandler } from "module_builder/StorageHandler";
-import { Process } from "module_builder/Process"
-import { IPCCallback } from "module_builder/IPCObjects";
-import { Setting } from "module_builder/Setting";
+import { BooleanSetting } from "@nexus/nexus-module-builder/settings/types";
+import { IPCCallback, Process, Setting, StorageHandler } from "@nexus/nexus-module-builder";
 
 
 export class VolumeControllerProcess extends Process {
