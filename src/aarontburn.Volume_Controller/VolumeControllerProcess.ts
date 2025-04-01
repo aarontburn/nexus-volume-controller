@@ -4,7 +4,7 @@ import { BooleanSetting } from "@nexus/nexus-module-builder/settings/types";
 import { IPCCallback, Process, Setting, StorageHandler } from "@nexus/nexus-module-builder";
 
 
-export class VolumeControllerProcess extends Process {
+export default class VolumeControllerProcess extends Process {
 
     private static readonly MODULE_NAME: string = "Volume Controller";
     private static readonly MODULE_ID:string = "aarontburn.Volume_Controller";
