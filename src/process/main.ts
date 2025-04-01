@@ -7,8 +7,8 @@ import { IPCCallback, Process, Setting, StorageHandler } from "@nexus/nexus-modu
 export default class VolumeControllerProcess extends Process {
 
     private static readonly MODULE_NAME: string = "Volume Controller";
-    private static readonly MODULE_ID:string = "aarontburn.Volume_Controller";
-    private static readonly HTML_PATH: string = path.join(__dirname, "./VolumeControllerHTML.html");
+    private static readonly MODULE_ID: string = "aarontburn.Volume_Controller";
+    private static readonly HTML_PATH: string = path.join(__dirname, "../renderer/index.html");
 
     private static readonly BACKGROUND_MUTE_FILE_NAME: string = 'bg_mute_paths.txt';
 
