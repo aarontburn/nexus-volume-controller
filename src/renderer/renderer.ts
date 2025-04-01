@@ -11,7 +11,10 @@ interface Session {
     isLocked: boolean
 }
 
-const MODULE_ID: string = "aarontburn.Volume_Controller";
+// This is auto-replaced during export. DO NOT MODIFY.
+const MODULE_ID: string = "{EXPORTED_MODULE_ID}";
+// ---------------------------------------------------
+// ---------------------------------------------------
 
 const sendToProcess = (eventType: string, ...data: any[]): Promise<any> => {
     return window.parent.ipc.send(MODULE_ID, eventType, ...data);

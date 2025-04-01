@@ -73,7 +73,7 @@ export default class VolumeControllerProcess extends Process {
         }
     }
 
-    public stop(): void {
+    public async onExit(): Promise<void> {
         clearTimeout(this.refreshTimeout);
     }
 
@@ -114,7 +114,7 @@ export default class VolumeControllerProcess extends Process {
             }
             case "mute-unfocused": {
                 SessionController.toggleUnfocusedSession(Number(data[0]));
-                this.writeBackgroundMuteToStorage();
+                await this.writeBackgroundMuteToStorage();
                 break;
             }
             case "session-lock": {
@@ -124,8 +124,8 @@ export default class VolumeControllerProcess extends Process {
         }
     }
 
-    private getBGMuteFromStorage(): void {
-        const contents: string | null = StorageHandler.readFromModuleStorage(this, VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME);
+    private async getBGMuteFromStorage(): Promise<void> {
+        const contents: string | null = await StorageHandler.readFromModuleStorage(this, VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME);
 
         if (contents === null) {
             return;
@@ -136,7 +136,7 @@ export default class VolumeControllerProcess extends Process {
     }
 
 
-    private writeBackgroundMuteToStorage(): void {
+    private async writeBackgroundMuteToStorage(): Promise<void> {
         let output: string = '';
 
         const paths: Set<string> = SessionController.getBGMutePaths();
@@ -146,7 +146,7 @@ export default class VolumeControllerProcess extends Process {
             }
         });
 
-        StorageHandler.writeToModuleStorage(
+        await StorageHandler.writeToModuleStorage(
             this,
             VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME,
             output.trim());

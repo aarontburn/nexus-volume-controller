@@ -7,7 +7,7 @@
     "start": "npm run build && electron ./node_modules/@nexus/nexus-client/main.js --dev",
     "export": "node node_modules/@nexus/nexus-exporter/exporter.js",
     "dev_export": "node node_modules/@nexus/nexus-exporter/exporter.js --dev",
-    "update-nexus": "npm update @nexus/nexus-exporter @nexus/nexus-module-builder @nexus/nexus-client"
+    "update-nexus": "npm update @nexus/nexus-exporter && npm update @nexus/nexus-module-builder && npm update @nexus/nexus-client"
   },
   "author": "aarontburn",
   "devDependencies": {
