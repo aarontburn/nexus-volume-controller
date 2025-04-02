@@ -13,15 +13,21 @@ interface Session {
 
 const MODULE_ID: string = "{EXPORTED_MODULE_ID}";
 
-const sendToProcess = (eventType: string, ...data: any[]): Promise<any> => {
-    return window.parent.ipc.send(MODULE_ID, eventType, ...data);
+const sendToProcess = (eventType: string, ...data: any[]): Promise<void> => {
+    return window.parent.ipc.send(MODULE_ID, eventType, data);
 }
+
+
+window.parent.ipc.on(MODULE_ID, (_, eventType: string, data: any[]) => {
+    handleEvent(eventType, data);
+});
+
 
 sendToProcess("init");
 
 const CONTROL_ACTIVE_CSS: string = 'session-option-active';
 
-window.parent.ipc.on(MODULE_ID, async (_, eventType: string, ...data: any[]) => {
+const handleEvent = (eventType: string, data: any[]) => {
     switch (eventType) {
         case 'master-update': {
             updateMaster(data[0]);
@@ -41,7 +47,7 @@ window.parent.ipc.on(MODULE_ID, async (_, eventType: string, ...data: any[]) => 
             break;
         }
     }
-});
+};
 
 
 const masterSlider: HTMLInputElement = document.getElementById('master-vol-slider') as HTMLInputElement;
