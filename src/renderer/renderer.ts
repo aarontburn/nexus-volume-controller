@@ -11,21 +11,15 @@ interface Session {
     isLocked: boolean
 }
 
-// This is auto-replaced during export. DO NOT MODIFY.
 const MODULE_ID: string = "{EXPORTED_MODULE_ID}";
-// ---------------------------------------------------
-// ---------------------------------------------------
 
 const sendToProcess = (eventType: string, ...data: any[]): Promise<any> => {
     return window.parent.ipc.send(MODULE_ID, eventType, ...data);
 }
 
-
-// Instruct module process to initialize once the renderer is ready.
 sendToProcess("init");
 
 const CONTROL_ACTIVE_CSS: string = 'session-option-active';
-
 
 window.parent.ipc.on(MODULE_ID, async (_, eventType: string, ...data: any[]) => {
     switch (eventType) {
