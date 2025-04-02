@@ -1,14 +1,14 @@
 import * as path from "path";
 import { SessionController } from "./SessionController";
 import { BooleanSetting } from "@nexus/nexus-module-builder/settings/types";
-import { IPCCallback, Process, Setting, StorageHandler } from "@nexus/nexus-module-builder";
+import { Process, Setting, StorageHandler } from "@nexus/nexus-module-builder";
 
+const MODULE_ID: string = "{EXPORTED_MODULE_ID}";
+const MODULE_NAME: string = "{EXPORTED_MODULE_NAME}";
+const HTML_PATH: string = path.join(__dirname, "../renderer/index.html");
 
 export default class VolumeControllerProcess extends Process {
 
-    private static readonly MODULE_NAME: string = "Volume Controller";
-    private static readonly MODULE_ID: string = "aarontburn.Volume_Controller";
-    private static readonly HTML_PATH: string = path.join(__dirname, "../renderer/index.html");
 
     private static readonly BACKGROUND_MUTE_FILE_NAME: string = 'bg_mute_paths.txt';
 
@@ -16,12 +16,8 @@ export default class VolumeControllerProcess extends Process {
 
     private refreshTimeout: NodeJS.Timeout;
 
-    public constructor(ipcCallback: IPCCallback) {
-        super(
-            VolumeControllerProcess.MODULE_ID,
-            VolumeControllerProcess.MODULE_NAME,
-            VolumeControllerProcess.HTML_PATH,
-            ipcCallback);
+    public constructor() {
+        super(MODULE_ID, MODULE_NAME, HTML_PATH);
     }
 
     public initialize(): void {
