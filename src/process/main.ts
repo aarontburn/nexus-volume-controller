@@ -65,7 +65,7 @@ export default class VolumeControllerProcess extends Process {
 
     public refreshSettings(modifiedSetting?: Setting<unknown>): void {
         if (modifiedSetting?.getAccessID() === 'show_pid') {
-            this.sendToRenderer("session-pid-visibility-modified", this.getSettings().getSetting("show_pid").getValue());
+            this.sendToRenderer("session-pid-visibility-modified", this.getSettings().findSetting("show_pid").getValue());
         }
     }
 

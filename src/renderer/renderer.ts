@@ -16,7 +16,7 @@ const sendToProcess = (eventType: string, ...data: any[]): Promise<void> => {
 }
 
 
-window.parent.ipc.on(this.window, (_, eventType: string, data: any[]) => {
+window.parent.ipc.on(this.window, (eventType: string, data: any[]) => {
     handleEvent(eventType, data);
 });
 
