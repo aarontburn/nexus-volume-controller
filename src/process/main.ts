@@ -17,7 +17,13 @@ export default class VolumeControllerProcess extends Process {
     private refreshTimeout: NodeJS.Timeout;
 
     public constructor() {
-        super(MODULE_ID, MODULE_NAME, HTML_PATH);
+		super({
+			moduleID: MODULE_ID,
+			moduleName: MODULE_NAME,
+			paths: {
+				htmlPath: HTML_PATH,
+			}
+		});
     }
 
     public initialize(): void {
