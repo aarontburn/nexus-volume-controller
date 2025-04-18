@@ -4,8 +4,7 @@
   "description": "A module written for Nexus to control system volume.",
   "scripts": {
     "postinstall": "npm install https://gitpkg.vercel.app/aarontburn/nexus-core/nexus/dist?main --no-save",
-    "build": "npm run dev_export",
-    "start": "npm run build && electron ./node_modules/@nexus/nexus-client/main.js --dev",
+    "start": "npm run dev_export && cd ./node_modules/@nexus/nexus-client/ && npm start",
     "export": "node node_modules/@nexus/nexus-exporter/exporter.js",
     "dev_export": "node node_modules/@nexus/nexus-exporter/exporter.js --dev"
   },

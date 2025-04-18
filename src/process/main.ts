@@ -26,8 +26,8 @@ export default class VolumeControllerProcess extends Process {
 		});
     }
 
-    public initialize(): void {
-        super.initialize()
+    public async initialize(): Promise<void> {
+        await super.initialize()
         // Get a audio session.
         this.getBGMuteFromStorage();
 
@@ -69,7 +69,7 @@ export default class VolumeControllerProcess extends Process {
     }
 
 
-    public refreshSettings(modifiedSetting?: Setting<unknown>): void {
+    public async onSettingModified(modifiedSetting?: Setting<unknown>): Promise<void> {
         if (modifiedSetting?.getAccessID() === 'show_pid') {
             this.sendToRenderer("session-pid-visibility-modified", this.getSettings().findSetting("show_pid").getValue());
         }
