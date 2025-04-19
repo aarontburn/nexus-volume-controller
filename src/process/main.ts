@@ -1,7 +1,7 @@
 import * as path from "path";
 import { SessionController } from "./SessionController";
 import { BooleanSetting } from "@nexus/nexus-module-builder/settings/types";
-import { Process, Setting, StorageHandler } from "@nexus/nexus-module-builder";
+import { Process, Setting } from "@nexus/nexus-module-builder";
 
 const MODULE_ID: string = "{EXPORTED_MODULE_ID}";
 const MODULE_NAME: string = "{EXPORTED_MODULE_NAME}";
@@ -127,7 +127,7 @@ export default class VolumeControllerProcess extends Process {
     }
 
     private async getBGMuteFromStorage(): Promise<void> {
-        const contents: string | null = await StorageHandler.readFromModuleStorage(this, VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME);
+        const contents: string | null = await this.fileManager.readFromStorage(VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME);
 
         if (contents === null) {
             return;
@@ -148,8 +148,7 @@ export default class VolumeControllerProcess extends Process {
             }
         });
 
-        await StorageHandler.writeToModuleStorage(
-            this,
+        await this.fileManager.writeToStorage(
             VolumeControllerProcess.BACKGROUND_MUTE_FILE_NAME,
             output.trim());
 
