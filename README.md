@@ -1,13 +1,20 @@
-# Volume Controller Module
-Module to control system sounds. Substitute for things like Window's Audio Mixer
+# Nexus: Volume Controller
 
-![image](https://github.com/aarontburn/modules-volume_controller/assets/103211131/470b6502-3389-4769-aa0f-0d914200bd86)
+**For Windows only**
 
+A module for [Nexus](https://github.com/aarontburn/nexus-core) that adds a volume controller, very similar to the Windows system volume controller. 
 
+![alt text](./assets/image.png)
 
-# Features
-1. Master volume control
-2. Individual process volume control
-3. Process mute
-4. Process solo (mute all except soloed process)
-6. Background mute (mute process when unfocused)
+## Installation
+1. Download the latest release `.zip`. 
+2. In Nexus, navigate to **Settings** > **Import Module**
+3. Select the downloaded `.zip` file to install.
+
+## Features
+- Master volume control
+- Individual process volume control
+- Process mute
+- Process solo (mute all except soloed process)
+- Background mute (mute process when unfocused)
+
