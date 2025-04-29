@@ -1,7 +1,7 @@
 import * as path from "path";
 import { SessionController } from "./SessionController";
-import { BooleanSetting } from "@nexus/nexus-module-builder/settings/types";
-import { Process, Setting } from "@nexus/nexus-module-builder";
+import { BooleanSetting } from "@nexus-app/nexus-module-builder/settings/types";
+import { Process, Setting } from "@nexus-app/nexus-module-builder";
 
 const MODULE_ID: string = "{EXPORTED_MODULE_ID}";
 const MODULE_NAME: string = "{EXPORTED_MODULE_NAME}";
