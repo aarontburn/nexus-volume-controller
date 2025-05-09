@@ -1,11 +1,36 @@
 {
-    "name": "{EXPORTED_MODULE_NAME}",
-    "author": "aarontburn",
+    "name": "Volume Controller",
+    "id": "aarontburn.Volume_Controller",
     "version": "1.0.0",
+    "author": "aarontburn",
     "description": "A system volume mixer.",
-    "build-version": 73,
     "link": "https://github.com/aarontburn/nexus-volume-controller",
     "platforms": [
         "win32"
-    ]
+    ],
+    "build": {
+        "build-version": 73,
+        "excluded": [
+            "electron.ts"
+        ],
+        "included": [],
+        "process": "./process/main.js",
+        "replace": [
+            {
+                "from": "{EXPORTED_MODULE_ID}",
+                "to": "%id%",
+                "at": [
+                    "./process/main.ts",
+                    "./renderer/renderer.ts"
+                ]
+            },
+            {
+                "from": "{EXPORTED_MODULE_NAME}",
+                "to": "%name%",
+                "at": [
+                    "./process/main.ts"
+                ]
+            }
+        ]
+    }
 }
