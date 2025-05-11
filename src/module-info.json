@@ -1,15 +1,19 @@
 {
     "name": "Volume Controller",
     "id": "aarontburn.Volume_Controller",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "aarontburn",
     "description": "A system volume mixer.",
     "link": "https://github.com/aarontburn/nexus-volume-controller",
     "platforms": [
         "win32"
     ],
+    "git-latest": {
+        "git-username": "aarontburn",
+        "git-repo-name": "nexus-volume-controller"
+    },
     "build": {
-        "build-version": 73,
+        "build-version": 1,
         "excluded": [
             "electron.ts"
         ],
