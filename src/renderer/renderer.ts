@@ -12,11 +12,11 @@ interface Session {
 }
 
 const sendToProcess = (eventType: string, ...data: any[]): Promise<void> => {
-    return window.parent.ipc.send(this.window, eventType, data);
+    return window.ipc.sendToProcess(eventType, data);
 }
 
 
-window.parent.ipc.on(this.window, (eventType: string, data: any[]) => {
+window.ipc.onProcessEvent((eventType: string, data: any[]) => {
     handleEvent(eventType, data);
 });
 
