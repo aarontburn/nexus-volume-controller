@@ -8,7 +8,7 @@
   },
   "author": "aarontburn",
   "devDependencies": {
-    "@nexus-app/nexus-client": "^0.0.10",
+    "@nexus-app/nexus-client": "^0.0.12",
     "@types/yauzl-promise": "^4.0.1",
     "electron": "^35.1.5",
     "typescript": "^4.8.3",
